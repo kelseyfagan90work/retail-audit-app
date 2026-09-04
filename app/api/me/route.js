@@ -4,9 +4,9 @@ import { getSessionAndProfile } from '@/lib/auth';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const { authUser, profile } = await getSessionAndProfile();
+  const { authUser, profile, profileError } = await getSessionAndProfile();
   if (!authUser) return NextResponse.json({ authenticated: false });
-  if (!profile) return NextResponse.json({ authenticated: true, provisioned: false });
+  if (!profile) return NextResponse.json({ authenticated: true, provisioned: false, debugError: profileError });
   return NextResponse.json({
     authenticated: true,
     provisioned: true,
