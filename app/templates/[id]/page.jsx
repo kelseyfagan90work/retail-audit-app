@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AppFrame from '@/components/AppFrame';
+import BackButton from '@/components/BackButton';
 import { api } from '@/lib/api';
 
 function SectionEditor({ section, onChanged }) {
@@ -103,6 +104,7 @@ function TemplateEditorContent({ templateId }) {
 
   return (
     <div>
+      <BackButton fallbackHref="/templates" />
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <h1>{template.name}</h1>

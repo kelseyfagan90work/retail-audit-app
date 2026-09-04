@@ -13,7 +13,7 @@ export default function AnswerToggle({ value, onChange, disabled }) {
           type="button"
           disabled={disabled}
           className={value === opt.value ? `selected ${opt.value}` : ''}
-          onClick={() => onChange(opt.value)}
+          onClick={() => onChange(value === opt.value ? null : opt.value)}
         >
           {opt.label}
         </button>

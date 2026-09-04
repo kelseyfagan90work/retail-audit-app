@@ -72,7 +72,7 @@ function TasksPanel({ user }) {
             </select>
             <select value={form.storeId} onChange={(e) => setForm({ ...form, storeId: e.target.value })}>
               <option value="">No store (optional)</option>
-              {stores.map((s) => <option key={s.id} value={s.id}>{s.store_number} — {s.store_name}</option>)}
+              {[...stores].sort((a, b) => a.store_name.localeCompare(b.store_name)).map((s) => <option key={s.id} value={s.id}>{s.store_name}</option>)}
             </select>
           </div>
           <input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} style={{ marginTop: 8 }} />
@@ -95,7 +95,7 @@ function TasksPanel({ user }) {
                 {t.description && <div style={{ fontSize: 13, color: 'var(--ink-soft)' }}>{t.description}</div>}
                 <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 2 }}>
                   {user.role === 'admin' && `${t.assigned_to_email} · `}
-                  {t.stores && `${t.stores.store_number} — ${t.stores.store_name} · `}
+                  {t.stores && `${t.stores.store_name} · `}
                   {t.due_date ? `Due ${t.due_date}` : 'No due date'}
                 </div>
               </div>
@@ -148,12 +148,11 @@ function DashboardContent(user) {
         {data && data.belowThreshold.length === 0 && <div className="empty-state">No stores below this threshold. Nice.</div>}
         {data && data.belowThreshold.length > 0 && (
           <table>
-            <thead><tr><th>Store</th><th>DM</th><th>Score</th><th>Audited</th></tr></thead>
+            <thead><tr><th>Store</th><th>Score</th><th>Audited</th></tr></thead>
             <tbody>
               {data.belowThreshold.map((s) => (
                 <tr key={s.storeId}>
-                  <td>{s.storeNumber} — {s.storeName}</td>
-                  <td>{s.districtManager}</td>
+                  <td>{s.storeName}</td>
                   <td><ScoreRing score={s.score} size={40} /></td>
                   <td><Link href={`/audits/${s.auditId}`}>{new Date(s.completedAt).toLocaleDateString()}</Link></td>
                 </tr>
@@ -173,12 +172,11 @@ function DashboardContent(user) {
         {data && data.overdueStores.length === 0 && <div className="empty-state">Every store's been audited recently.</div>}
         {data && data.overdueStores.length > 0 && (
           <table>
-            <thead><tr><th>Store</th><th>DM</th><th>Last audit</th></tr></thead>
+            <thead><tr><th>Store</th><th>Last audit</th></tr></thead>
             <tbody>
               {data.overdueStores.map((s) => (
                 <tr key={s.storeId}>
-                  <td>{s.storeNumber} — {s.storeName}</td>
-                  <td>{s.districtManager}</td>
+                  <td>{s.storeName}</td>
                   <td>{s.neverAudited ? 'Never' : new Date(s.lastAuditDate).toLocaleDateString()}</td>
                 </tr>
               ))}
@@ -196,7 +194,7 @@ function DashboardContent(user) {
             <tbody>
               {data.outstandingAudits.map((a) => (
                 <tr key={a.auditId}>
-                  <td><Link href={`/audits/${a.auditId}`}>{a.storeNumber} — {a.storeName}</Link></td>
+                  <td><Link href={`/audits/${a.auditId}`}>{a.storeName}</Link></td>
                   <td>{a.templateName}</td>
                   <td>{a.auditorEmail}</td>
                   <td>{a.daysOpen}</td>

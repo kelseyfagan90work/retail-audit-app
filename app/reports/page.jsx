@@ -5,7 +5,7 @@ import AppFrame from '@/components/AppFrame';
 import { api } from '@/lib/api';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
-const BAR_COLORS = ['#0f5c4d', '#1d7a3c', '#b8860f', '#b23a34', '#57616e'];
+const BAR_COLORS = ['#2dd4bf', '#3ddc8f', '#f5b942', '#ff6b6b', '#8b93a3'];
 
 function cleanParams(obj) {
   const out = {};
@@ -55,7 +55,7 @@ function ReportsContent() {
           </select>
           <select value={storeId} onChange={(e) => setStoreId(e.target.value)}>
             <option value="">All stores</option>
-            {filteredStores.map((s) => <option key={s.id} value={s.id}>{s.store_number} — {s.store_name}</option>)}
+            {[...filteredStores].sort((a, b) => a.store_name.localeCompare(b.store_name)).map((s) => <option key={s.id} value={s.id}>{s.store_name}</option>)}
           </select>
           <input type="date" placeholder="From" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
           <input type="date" placeholder="To" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
@@ -74,11 +74,11 @@ function ReportsContent() {
             <div style={{ height: 240, marginTop: 10 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={trendData.trend}>
-                  <CartesianGrid stroke="#e2ded4" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="averageScore" stroke="#0f5c4d" strokeWidth={2} dot={{ r: 3 }} />
+                  <CartesianGrid stroke="#2a2f3a" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#8b93a3' }} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#8b93a3' }} />
+                  <Tooltip contentStyle={{ background: '#1e222b', border: '1px solid #2a2f3a', borderRadius: 8, color: '#e8eaf0', fontSize: 13 }} />
+                  <Line type="monotone" dataKey="averageScore" stroke="#2dd4bf" strokeWidth={2} dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -91,10 +91,10 @@ function ReportsContent() {
               <div style={{ height: Math.max(200, trendData.byDistrictManager.length * 36), marginTop: 10 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={trendData.byDistrictManager} layout="vertical" margin={{ left: 20 }}>
-                    <CartesianGrid stroke="#e2ded4" horizontal={false} />
-                    <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} />
-                    <YAxis type="category" dataKey="districtManager" tick={{ fontSize: 12 }} width={110} />
-                    <Tooltip />
+                    <CartesianGrid stroke="#2a2f3a" horizontal={false} />
+                    <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12, fill: '#8b93a3' }} />
+                    <YAxis type="category" dataKey="districtManager" tick={{ fontSize: 12, fill: '#8b93a3' }} width={110} />
+                    <Tooltip contentStyle={{ background: '#1e222b', border: '1px solid #2a2f3a', borderRadius: 8, color: '#e8eaf0', fontSize: 13 }} />
                     <Bar dataKey="averageScore" radius={[0, 4, 4, 0]}>
                       {trendData.byDistrictManager.map((_, i) => <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />)}
                     </Bar>
@@ -111,13 +111,13 @@ function ReportsContent() {
               <div style={{ height: Math.max(200, breakdownData.sections.length * 36), marginTop: 10 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={breakdownData.sections} layout="vertical" margin={{ left: 20 }}>
-                    <CartesianGrid stroke="#e2ded4" horizontal={false} />
-                    <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} />
-                    <YAxis type="category" dataKey="section" tick={{ fontSize: 12 }} width={140} />
-                    <Tooltip formatter={(v, name, props) => [`${v}%`, `pass rate (n=${props.payload.sampleSize})`]} />
+                    <CartesianGrid stroke="#2a2f3a" horizontal={false} />
+                    <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12, fill: '#8b93a3' }} />
+                    <YAxis type="category" dataKey="section" tick={{ fontSize: 12, fill: '#8b93a3' }} width={140} />
+                    <Tooltip formatter={(v, name, props) => [`${v}%`, `pass rate (n=${props.payload.sampleSize})`]} contentStyle={{ background: '#1e222b', border: '1px solid #2a2f3a', borderRadius: 8, color: '#e8eaf0', fontSize: 13 }} />
                     <Bar dataKey="passRate" radius={[0, 4, 4, 0]}>
                       {breakdownData.sections.map((s, i) => (
-                        <Cell key={i} fill={s.passRate >= 90 ? '#1d7a3c' : s.passRate >= 75 ? '#b8860f' : '#b23a34'} />
+                        <Cell key={i} fill={s.passRate >= 90 ? '#3ddc8f' : s.passRate >= 75 ? '#f5b942' : '#ff6b6b'} />
                       ))}
                     </Bar>
                   </BarChart>
@@ -133,13 +133,12 @@ function ReportsContent() {
               </div>
               <table>
                 <thead>
-                  <tr><th>Store</th><th>DM</th><th>{trendData.prevMonth}</th><th>{trendData.lastMonth}</th><th>Change</th></tr>
+                  <tr><th>Store</th><th>{trendData.prevMonth}</th><th>{trendData.lastMonth}</th><th>Change</th></tr>
                 </thead>
                 <tbody>
-                  {trendData.storeComparison.map((s) => (
+                  {[...trendData.storeComparison].sort((a, b) => a.storeName.localeCompare(b.storeName)).map((s) => (
                     <tr key={s.storeNumber}>
-                      <td>{s.storeNumber} — {s.storeName}</td>
-                      <td>{s.districtManager}</td>
+                      <td>{s.storeName}</td>
                       <td>{s.previousScore != null ? `${s.previousScore}%` : '—'}</td>
                       <td>{s.currentScore != null ? `${s.currentScore}%` : '—'}</td>
                       <td className={s.change > 0 ? 'trend-up' : s.change < 0 ? 'trend-down' : ''}>

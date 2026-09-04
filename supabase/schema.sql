@@ -55,6 +55,9 @@ create table audits (
   auditor_email text not null,
   status text not null default 'in_progress' check (status in ('in_progress', 'completed')),
   overall_score numeric,                              -- percentage, 0-100, filled in on completion
+  announced boolean,                                  -- null = not set, true = announced, false = unannounced
+  manager_on_shift text,
+  overall_note text,
   started_at timestamptz not null default now(),
   completed_at timestamptz,
   report_sent_at timestamptz

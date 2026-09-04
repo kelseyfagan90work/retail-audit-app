@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import AppFrame from '@/components/AppFrame';
 import { api } from '@/lib/api';
 import StoresImportPanel from '@/components/StoresImportPanel';
+import { naturalCompare } from '@/lib/sort';
 
 function StoresContent() {
   const [stores, setStores] = useState(null);
@@ -61,7 +62,7 @@ function StoresContent() {
             <tr><th>Store</th><th>Region</th><th>District Manager</th><th>DM Email</th><th>Store Email</th></tr>
           </thead>
           <tbody>
-            {(stores || []).map((s) => (
+            {[...(stores || [])].sort((a, b) => naturalCompare(a.store_number, b.store_number)).map((s) => (
               <tr key={s.id}>
                 <td>{s.store_number} — {s.store_name}</td>
                 <td>{s.region || '—'}</td>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AppFrame from '@/components/AppFrame';
+import BackButton from '@/components/BackButton';
 import { api } from '@/lib/api';
 
 function NewAuditContent() {
@@ -38,14 +39,15 @@ function NewAuditContent() {
 
   return (
     <div className="card" style={{ maxWidth: 480 }}>
+      <BackButton fallbackHref="/audits" />
       <h1>Start a new audit</h1>
       {error && <div style={{ color: 'var(--rejected)', margin: '10px 0' }}>{error}</div>}
       <div style={{ margin: '16px 0' }}>
         <label style={{ fontSize: 13, color: 'var(--ink-soft)', display: 'block', marginBottom: 4 }}>Store</label>
         <select value={storeId} onChange={(e) => setStoreId(e.target.value)} style={{ width: '100%' }}>
           <option value="">Select a store...</option>
-          {stores.map((s) => (
-            <option key={s.id} value={s.id}>{s.store_number} — {s.store_name} ({s.district_manager})</option>
+          {[...stores].sort((a, b) => a.store_name.localeCompare(b.store_name)).map((s) => (
+            <option key={s.id} value={s.id}>{s.store_name}</option>
           ))}
         </select>
       </div>

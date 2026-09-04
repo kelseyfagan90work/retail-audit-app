@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { naturalCompare } from '@/lib/sort';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,8 +10,9 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
 
   const admin = createAdminClient();
-  const { data, error } = await admin.from('stores').select('*').order('store_number');
+  const { data, error } = await admin.from('stores').select('*');
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  data.sort((a, b) => naturalCompare(a.store_number, b.store_number));
   return NextResponse.json(data);
 }
 

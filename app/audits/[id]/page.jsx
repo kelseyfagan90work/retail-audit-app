@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import AppFrame from '@/components/AppFrame';
+import BackButton from '@/components/BackButton';
 import { api, uploadToStorage } from '@/lib/api';
 import { compressImage } from '@/lib/compressImage';
 import AnswerToggle from '@/components/AnswerToggle';
@@ -45,7 +47,7 @@ function QuestionRow({ question, auditId, readOnly, onChanged }) {
 
       {!readOnly && (
         <textarea
-          placeholder="Optional note..."
+          placeholder="Optional note... (click a selected Yes/No/N/A again to clear it)"
           value={note}
           onChange={(e) => setNote(e.target.value)}
           onBlur={saveNote}
@@ -80,14 +82,20 @@ function QuestionRow({ question, auditId, readOnly, onChanged }) {
   );
 }
 
-function AuditContent({ auditId }) {
+function AuditContent({ auditId, user }) {
   const [audit, setAudit] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [reportStatus, setReportStatus] = useState(null);
+  const [managerOnShift, setManagerOnShift] = useState('');
+  const [overallNote, setOverallNote] = useState('');
+  const router = useRouter();
 
   async function refresh() {
-    setAudit(await api.getAudit(auditId));
+    const data = await api.getAudit(auditId);
+    setAudit(data);
+    setManagerOnShift(data.manager_on_shift || '');
+    setOverallNote(data.overall_note || '');
   }
   useEffect(() => { refresh(); /* eslint-disable-next-line */ }, [auditId]);
 
@@ -126,37 +134,115 @@ function AuditContent({ auditId }) {
     }
   }
 
+  async function setAnnounced(value) {
+    await api.updateAudit(auditId, { announced: audit.announced === value ? null : value });
+    await refresh();
+  }
+
+  async function saveManagerOnShift() {
+    if (managerOnShift === (audit.manager_on_shift || '')) return;
+    await api.updateAudit(auditId, { managerOnShift });
+  }
+
+  async function saveOverallNote() {
+    if (overallNote === (audit.overall_note || '')) return;
+    await api.updateAudit(auditId, { overallNote });
+  }
+
+  async function reopen() {
+    if (!confirm('Reopen this audit for editing? Its score will be recalculated when you complete it again.')) return;
+    setBusy(true);
+    try {
+      await api.updateAudit(auditId, { status: 'in_progress' });
+      await refresh();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function discard() {
+    if (!confirm('Discard this audit permanently? This cannot be undone.')) return;
+    setBusy(true);
+    try {
+      await api.discardAudit(auditId);
+      router.push('/audits');
+    } catch (e) {
+      setError(e.message);
+      setBusy(false);
+    }
+  }
+
+  const canDiscard = user.role === 'admin' || (audit.auditor_email === user.email && audit.status === 'in_progress');
+
   return (
     <div>
+      <BackButton fallbackHref="/audits" />
+
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1>{audit.stores.store_name} <span style={{ color: 'var(--ink-soft)', fontWeight: 400 }}>#{audit.stores.store_number}</span></h1>
-            <div style={{ color: 'var(--ink-soft)', fontSize: 14 }}>{audit.template_name} · {audit.stores.district_manager}{audit.stores.region ? ` · ${audit.stores.region}` : ''}</div>
-            <div style={{ color: 'var(--ink-soft)', fontSize: 13, marginTop: 4 }}>
-              {readOnly ? `Completed ${new Date(audit.completed_at).toLocaleString()}` : `Started ${new Date(audit.started_at).toLocaleString()}`}
-              {' · '}{answeredCount}/{allQuestions.length} answered
+            <h1>{audit.stores.store_name}</h1>
+            <div style={{ color: 'var(--ink-soft)', fontSize: 14 }}>
+              {audit.template_name}{audit.stores.region ? ` · ${audit.stores.region}` : ''}
+            </div>
+            <div style={{ color: 'var(--ink-soft)', fontSize: 13, marginTop: 6, lineHeight: 1.7 }}>
+              Auditor: {audit.auditor_email}<br />
+              Started: {new Date(audit.started_at).toLocaleString()}<br />
+              {audit.completed_at && <>Completed: {new Date(audit.completed_at).toLocaleString()}<br /></>}
+              {answeredCount}/{allQuestions.length} answered
             </div>
           </div>
           <ScoreRing score={readOnly ? audit.overall_score : liveScore} />
         </div>
 
+        <div className="grid grid-2" style={{ marginTop: 14 }}>
+          <div>
+            <label style={{ fontSize: 12, color: 'var(--ink-soft)', display: 'block', marginBottom: 4 }}>Announced or unannounced</label>
+            <div className="answer-toggle">
+              <button
+                type="button"
+                disabled={readOnly}
+                className={audit.announced === true ? 'selected yes' : ''}
+                onClick={() => setAnnounced(true)}
+              >Announced</button>
+              <button
+                type="button"
+                disabled={readOnly}
+                className={audit.announced === false ? 'selected no' : ''}
+                onClick={() => setAnnounced(false)}
+              >Unannounced</button>
+            </div>
+          </div>
+          <div>
+            <label style={{ fontSize: 12, color: 'var(--ink-soft)', display: 'block', marginBottom: 4 }}>Manager on shift</label>
+            <input
+              type="text"
+              value={managerOnShift}
+              onChange={(e) => setManagerOnShift(e.target.value)}
+              onBlur={saveManagerOnShift}
+              disabled={readOnly}
+              placeholder="Name"
+              style={{ width: '100%' }}
+            />
+          </div>
+        </div>
+
         {error && <div style={{ color: 'var(--rejected)', marginTop: 12 }}>{error}</div>}
 
-        {!readOnly && (
-          <div style={{ marginTop: 14 }}>
-            <button className="primary" onClick={complete} disabled={busy}>Complete audit</button>
-          </div>
-        )}
-
-        {readOnly && (
-          <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>
+          {!readOnly && <button className="primary" onClick={complete} disabled={busy}>Complete audit</button>}
+          {readOnly && (
             <button className="primary" onClick={sendReport} disabled={busy || (!audit.stores.store_email && !audit.stores.district_manager_email)}>
               {audit.report_sent_at ? 'Resend report to store' : 'Send report to store'}
             </button>
-            {!audit.stores.store_email && !audit.stores.district_manager_email && <span style={{ fontSize: 13, color: 'var(--ink-soft)' }}>No store or district manager email on file for this store.</span>}
-            {audit.report_sent_at && <span style={{ fontSize: 13, color: 'var(--ink-soft)' }}>Last sent {new Date(audit.report_sent_at).toLocaleString()}</span>}
-          </div>
+          )}
+          {readOnly && user.role === 'admin' && <button className="ghost" onClick={reopen} disabled={busy}>Edit audit</button>}
+          {canDiscard && <button className="danger-ghost" onClick={discard} disabled={busy}>Discard audit</button>}
+        </div>
+        {readOnly && !audit.stores.store_email && !audit.stores.district_manager_email && (
+          <div style={{ marginTop: 6, fontSize: 13, color: 'var(--ink-soft)' }}>No store or district manager email on file for this store.</div>
         )}
         {reportStatus && (
           <div style={{ marginTop: 8, color: reportStatus.ok ? 'var(--approved)' : 'var(--rejected)', fontSize: 13 }}>{reportStatus.message}</div>
@@ -171,10 +257,21 @@ function AuditContent({ auditId }) {
           ))}
         </div>
       ))}
+
+      <div className="card">
+        <h2>Overall notes</h2>
+        <textarea
+          placeholder="Any additional notes about this visit..."
+          value={overallNote}
+          onChange={(e) => setOverallNote(e.target.value)}
+          onBlur={saveOverallNote}
+          style={{ minHeight: 80 }}
+        />
+      </div>
     </div>
   );
 }
 
 export default function AuditPage({ params }) {
-  return <AppFrame>{() => <AuditContent auditId={params.id} />}</AppFrame>;
+  return <AppFrame>{(user) => <AuditContent auditId={params.id} user={user} />}</AppFrame>;
 }
