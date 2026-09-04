@@ -4,6 +4,12 @@ import { createAdminClient } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
 
+// The month this audit counts toward for reporting — the audit_period field
+// if set, otherwise falls back to when it was actually completed.
+function effectiveMonth(a) {
+  return (a.audit_period || a.completed_at).slice(0, 7);
+}
+
 export async function GET(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
@@ -12,32 +18,41 @@ export async function GET(request) {
   const region = params.get('region');
   const districtManager = params.get('districtManager');
   const storeId = params.get('storeId');
-  const dateFrom = params.get('dateFrom');
+  const templateId = params.get('templateId');
+  const dateFrom = params.get('dateFrom'); // YYYY-MM-DD from a date input
   const dateTo = params.get('dateTo');
 
   const admin = createAdminClient();
   let query = admin
     .from('audits')
-    .select('id, overall_score, completed_at, store_id, stores!inner(store_number, store_name, region, district_manager)')
-    .eq('status', 'completed')
-    .order('completed_at');
+    .select('id, overall_score, completed_at, audit_period, store_id, template_name, stores!inner(store_number, store_name, region, district_manager)')
+    .eq('status', 'completed');
 
   if (region) query = query.eq('stores.region', region);
   if (districtManager) query = query.eq('stores.district_manager', districtManager);
   if (storeId) query = query.eq('store_id', storeId);
-  if (dateFrom) query = query.gte('completed_at', dateFrom);
-  if (dateTo) query = query.lte('completed_at', dateTo);
+  if (templateId) query = query.eq('template_id', templateId);
 
-  const { data, error } = await query;
+  const { data: allData, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Date range filtering happens here in JS (not in the query above) because
+  // it needs to apply against audit_period with a completed_at fallback,
+  // which isn't expressible as a single Postgres column comparison.
+  const data = allData.filter((a) => {
+    const month = effectiveMonth(a);
+    if (dateFrom && month < dateFrom.slice(0, 7)) return false;
+    if (dateTo && month > dateTo.slice(0, 7)) return false;
+    return true;
+  });
+  data.sort((a, b) => effectiveMonth(a).localeCompare(effectiveMonth(b)));
 
   const avg = (arr) => (arr && arr.length ? Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10 : null);
 
   // Month-over-month trend line.
   const byMonth = {};
   data.forEach((a) => {
-    const month = a.completed_at.slice(0, 7);
-    (byMonth[month] ||= []).push(a.overall_score);
+    (byMonth[effectiveMonth(a)] ||= []).push(a.overall_score);
   });
   const trend = Object.entries(byMonth)
     .sort(([a], [b]) => a.localeCompare(b))
@@ -54,6 +69,18 @@ export async function GET(request) {
     .map(([districtManager, scores]) => ({ districtManager, averageScore: avg(scores), auditCount: scores.length }))
     .sort((a, b) => b.averageScore - a.averageScore);
 
+  // Score by audit template, per month — lets you track "DSA Performance"
+  // or "Compliance" (etc.) improving or slipping over time, independent of
+  // the other template types.
+  const byMonthTemplate = {};
+  data.forEach((a) => {
+    const key = `${effectiveMonth(a)}::${a.template_name}`;
+    (byMonthTemplate[key] ||= { month: effectiveMonth(a), template: a.template_name, scores: [] }).scores.push(a.overall_score);
+  });
+  const templateTrend = Object.values(byMonthTemplate)
+    .map((t) => ({ month: t.month, template: t.template, averageScore: avg(t.scores) }))
+    .sort((a, b) => a.month.localeCompare(b.month));
+
   // Per-store comparison for the most recent two months present.
   const months = trend.map((t) => t.month);
   const lastMonth = months[months.length - 1];
@@ -61,7 +88,7 @@ export async function GET(request) {
 
   const byStore = {};
   data.forEach((a) => {
-    const month = a.completed_at.slice(0, 7);
+    const month = effectiveMonth(a);
     if (month !== lastMonth && month !== prevMonth) return;
     const key = a.store_id;
     (byStore[key] ||= { storeNumber: a.stores.store_number, storeName: a.stores.store_name, districtManager: a.stores.district_manager, scores: {} });
@@ -81,6 +108,5 @@ export async function GET(request) {
     };
   });
 
-  return NextResponse.json({ trend, byDistrictManager, storeComparison, lastMonth, prevMonth });
+  return NextResponse.json({ trend, byDistrictManager, templateTrend, storeComparison, lastMonth, prevMonth });
 }
-

@@ -27,6 +27,7 @@ export default function Nav({ user }) {
         {link('/reports', 'Reports')}
         {user.role === 'admin' && link('/templates', 'Templates')}
         {user.role === 'admin' && link('/stores', 'Stores')}
+        {user.role === 'admin' && link('/users', 'Users')}
       </div>
       <div className="who">
         <span>{user.displayName} · {user.role}</span>

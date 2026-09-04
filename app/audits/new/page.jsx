@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AppFrame from '@/components/AppFrame';
 import BackButton from '@/components/BackButton';
+import MonthYearSelect from '@/components/MonthYearSelect';
 import { api } from '@/lib/api';
 
 function NewAuditContent() {
@@ -11,6 +12,7 @@ function NewAuditContent() {
   const [templates, setTemplates] = useState([]);
   const [storeId, setStoreId] = useState('');
   const [templateId, setTemplateId] = useState('');
+  const [auditPeriod, setAuditPeriod] = useState(new Date().toISOString().slice(0, 7));
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const router = useRouter();
@@ -28,7 +30,7 @@ function NewAuditContent() {
     setBusy(true);
     setError(null);
     try {
-      const audit = await api.createAudit({ storeId: Number(storeId), templateId: Number(templateId) });
+      const audit = await api.createAudit({ storeId: Number(storeId), templateId: Number(templateId), auditPeriod });
       router.push(`/audits/${audit.id}`);
     } catch (e) {
       setError(e.message);
@@ -59,6 +61,11 @@ function NewAuditContent() {
             <option key={t.id} value={t.id}>{t.name}</option>
           ))}
         </select>
+      </div>
+      <div style={{ margin: '16px 0' }}>
+        <label style={{ fontSize: 13, color: 'var(--ink-soft)', display: 'block', marginBottom: 4 }}>Audit month</label>
+        <MonthYearSelect value={auditPeriod} onChange={setAuditPeriod} />
+        <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 4 }}>Defaults to the current month — change this if you're auditing a prior month.</div>
       </div>
       <button className="primary" onClick={start} disabled={busy}>{busy ? 'Starting...' : 'Start audit'}</button>
     </div>

@@ -25,7 +25,7 @@ export async function POST(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
 
-  const { storeId, templateId } = await request.json();
+  const { storeId, templateId, auditPeriod } = await request.json();
   if (!storeId || !templateId) return NextResponse.json({ error: 'storeId and templateId are required.' }, { status: 400 });
 
   const admin = createAdminClient();
@@ -43,6 +43,8 @@ export async function POST(request) {
     .eq('template_id', templateId)
     .order('sort_order');
 
+  const period = auditPeriod ? `${auditPeriod}-01` : `${new Date().toISOString().slice(0, 7)}-01`;
+
   const { data: audit, error: auditError } = await admin
     .from('audits')
     .insert({
@@ -51,6 +53,7 @@ export async function POST(request) {
       template_name: template.name,
       auditor_email: user.email,
       auditor_name: user.displayName,
+      audit_period: period,
     })
     .select()
     .single();

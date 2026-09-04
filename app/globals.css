@@ -65,6 +65,7 @@ code { background: var(--card-raised); padding: 1px 6px; border-radius: 4px; fon
   background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 20px 22px; margin-bottom: 16px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  overflow-x: auto;
 }
 
 .grid { display: grid; gap: 14px; }
@@ -166,3 +167,28 @@ tbody tr:hover td { background: rgba(255, 255, 255, 0.02); }
 .inline-edit-row:last-child { border-bottom: none; }
 .inline-edit-row input[type="text"] { flex: 1; }
 .inline-edit-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+
+/* Mobile pass — this is how most audits actually get run */
+@media (max-width: 640px) {
+  .app-shell { padding: 16px 14px 48px; }
+  h1 { font-size: 20px; }
+
+  .top-nav { flex-wrap: wrap; gap: 10px; padding: 12px 14px; row-gap: 8px; }
+  .top-nav .links { gap: 14px; flex-wrap: wrap; }
+  .top-nav .who span { display: none; } /* keep the sign-out button, drop the name/role text */
+
+  .card { padding: 16px; }
+
+  .grid-2 { grid-template-columns: 1fr; }
+
+  /* Question rows stack instead of squeezing the toggle onto a narrow line */
+  .audit-question-row { flex-direction: column; align-items: stretch; gap: 10px; }
+  .answer-toggle { justify-content: stretch; }
+  .answer-toggle button { flex: 1; padding: 10px 8px; font-size: 14px; } /* bigger tap targets */
+
+  button { padding: 10px 14px; } /* bigger tap targets generally */
+  button.small { padding: 7px 12px; }
+
+  table { font-size: 13px; }
+  th, td { padding: 8px 6px; }
+}

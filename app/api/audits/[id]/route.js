@@ -64,6 +64,7 @@ export async function PATCH(request, { params }) {
   if ('overallNote' in body) updates.overall_note = body.overallNote;
   if ('announced' in body) updates.announced = body.announced;
   if ('managerOnShift' in body) updates.manager_on_shift = body.managerOnShift;
+  if ('auditPeriod' in body) updates.audit_period = body.auditPeriod ? `${body.auditPeriod}-01` : null;
 
   // Reopening a completed audit for editing (e.g. a store appeal) is
   // admin-only — it unlocks question editing again by flipping status back

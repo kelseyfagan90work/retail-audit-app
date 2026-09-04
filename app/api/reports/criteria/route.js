@@ -12,22 +12,29 @@ export async function GET(request) {
   const region = params.get('region');
   const districtManager = params.get('districtManager');
   const storeId = params.get('storeId');
+  const templateId = params.get('templateId');
   const auditorEmail = params.get('auditorEmail');
   const dateFrom = params.get('dateFrom');
   const dateTo = params.get('dateTo');
 
   const admin = createAdminClient();
-  let auditQuery = admin.from('audits').select('id, stores!inner(region, district_manager)').eq('status', 'completed');
+  let auditQuery = admin.from('audits').select('id, completed_at, audit_period, stores!inner(region, district_manager)').eq('status', 'completed');
 
   if (region) auditQuery = auditQuery.eq('stores.region', region);
   if (districtManager) auditQuery = auditQuery.eq('stores.district_manager', districtManager);
   if (storeId) auditQuery = auditQuery.eq('store_id', storeId);
+  if (templateId) auditQuery = auditQuery.eq('template_id', templateId);
   if (auditorEmail) auditQuery = auditQuery.eq('auditor_email', auditorEmail);
-  if (dateFrom) auditQuery = auditQuery.gte('completed_at', dateFrom);
-  if (dateTo) auditQuery = auditQuery.lte('completed_at', dateTo);
 
-  const { data: audits, error: auditsError } = await auditQuery;
+  const { data: allAudits, error: auditsError } = await auditQuery;
   if (auditsError) return NextResponse.json({ error: auditsError.message }, { status: 500 });
+
+  const audits = allAudits.filter((a) => {
+    const month = (a.audit_period || a.completed_at).slice(0, 7);
+    if (dateFrom && month < dateFrom.slice(0, 7)) return false;
+    if (dateTo && month > dateTo.slice(0, 7)) return false;
+    return true;
+  });
 
   const auditIds = audits.map((a) => a.id);
   if (auditIds.length === 0) return NextResponse.json({ criteria: [] });

@@ -54,6 +54,7 @@ create table audits (
   template_name text not null,                       -- snapshot, so the audit still shows a name even if the template is renamed/deleted
   auditor_email text not null,
   auditor_name text,
+  audit_period date,                                  -- the month this audit is FOR (may differ from when it was conducted)
   status text not null default 'in_progress' check (status in ('in_progress', 'completed')),
   overall_score numeric,                              -- percentage, 0-100, filled in on completion
   announced boolean,                                  -- null = not set, true = announced, false = unannounced
@@ -107,6 +108,18 @@ create table tasks (
   completed_at timestamptz
 );
 
+-- People who asked for access via the "Request access" link on the login
+-- page. An admin reviews these on the Users page and turns them into a real
+-- invite (or dismisses them) — no outbound email needed for the request itself.
+create table invite_requests (
+  id serial primary key,
+  name text not null,
+  email text not null,
+  message text,
+  status text not null default 'pending' check (status in ('pending', 'invited', 'dismissed')),
+  created_at timestamptz not null default now()
+);
+
 create index on stores (district_manager);
 create index on stores (region);
 create index on template_sections (template_id);
@@ -134,6 +147,7 @@ alter table audit_sections enable row level security;
 alter table audit_questions enable row level security;
 alter table audit_photos enable row level security;
 alter table tasks enable row level security;
+alter table invite_requests enable row level security;
 
 create policy "users can read their own profile" on profiles
   for select using (auth.uid() = id);

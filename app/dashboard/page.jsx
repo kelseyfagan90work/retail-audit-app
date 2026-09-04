@@ -142,7 +142,7 @@ function DashboardContent(user) {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h1 style={{ margin: 0 }}>Dashboard</h1>
+        <h1 style={{ margin: 0 }}>RAD Dashboard</h1>
         <div style={{ display: 'flex', gap: 8 }}>
           <select value={storeId} onChange={(e) => setStoreId(e.target.value)}>
             <option value="">All stores</option>

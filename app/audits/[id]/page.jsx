@@ -8,6 +8,7 @@ import { api, uploadToStorage } from '@/lib/api';
 import { compressImage } from '@/lib/compressImage';
 import AnswerToggle from '@/components/AnswerToggle';
 import ScoreRing from '@/components/ScoreRing';
+import MonthYearSelect from '@/components/MonthYearSelect';
 
 function QuestionRow({ question, auditId, readOnly, onChanged }) {
   const [note, setNote] = useState(question.note || '');
@@ -139,6 +140,7 @@ function AuditContent({ auditId, user }) {
   const [reportStatus, setReportStatus] = useState(null);
   const [managerOnShift, setManagerOnShift] = useState('');
   const [overallNote, setOverallNote] = useState('');
+  const [auditPeriod, setAuditPeriod] = useState('');
   const router = useRouter();
 
   async function refresh() {
@@ -146,6 +148,7 @@ function AuditContent({ auditId, user }) {
     setAudit(data);
     setManagerOnShift(data.manager_on_shift || '');
     setOverallNote(data.overall_note || '');
+    setAuditPeriod(data.audit_period ? data.audit_period.slice(0, 7) : '');
   }
   useEffect(() => { refresh(); api.getUsers().then(setUsers); /* eslint-disable-next-line */ }, [auditId]);
 
@@ -199,6 +202,12 @@ function AuditContent({ auditId, user }) {
     await api.updateAudit(auditId, { overallNote });
   }
 
+  async function saveAuditPeriod(value) {
+    setAuditPeriod(value);
+    await api.updateAudit(auditId, { auditPeriod: value });
+    await refresh();
+  }
+
   async function reopen() {
     if (!confirm('Reopen this audit for editing? Its score will be recalculated when you complete it again.')) return;
     setBusy(true);
@@ -247,7 +256,11 @@ function AuditContent({ auditId, user }) {
           <ScoreRing score={readOnly ? audit.overall_score : liveScore} />
         </div>
 
-        <div className="grid grid-2" style={{ marginTop: 14 }}>
+        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', marginTop: 14 }}>
+          <div>
+            <label style={{ fontSize: 12, color: 'var(--ink-soft)', display: 'block', marginBottom: 4 }}>Audit month</label>
+            <MonthYearSelect value={auditPeriod} onChange={saveAuditPeriod} disabled={false} />
+          </div>
           <div>
             <label style={{ fontSize: 12, color: 'var(--ink-soft)', display: 'block', marginBottom: 4 }}>Announced or unannounced</label>
             <div className="answer-toggle">
@@ -288,6 +301,9 @@ function AuditContent({ auditId, user }) {
               {audit.report_sent_at ? 'Resend report to store' : 'Send report to store'}
             </button>
           )}
+          <a href={`/api/audits/${auditId}/export-pdf`} target="_blank" rel="noreferrer">
+            <button className="ghost" type="button">Export PDF</button>
+          </a>
           {readOnly && user.role === 'admin' && <button className="ghost" onClick={reopen} disabled={busy}>Edit audit</button>}
           {canDiscard && <button className="danger-ghost" onClick={discard} disabled={busy}>Discard audit</button>}
         </div>
