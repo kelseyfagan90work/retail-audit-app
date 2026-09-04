@@ -10,7 +10,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (user === null) router.replace('/login');
-    else if (user && user !== 'unprovisioned') router.replace('/audits');
+    else if (user && user !== 'unprovisioned') router.replace('/dashboard');
   }, [user, router]);
 
   if (user === 'unprovisioned') {

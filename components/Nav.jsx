@@ -22,6 +22,7 @@ export default function Nav({ user }) {
   return (
     <div className="top-nav">
       <div className="links">
+        {link('/dashboard', 'Dashboard')}
         {link('/audits', 'Audits')}
         {link('/reports', 'Reports')}
         {user.role === 'admin' && link('/templates', 'Templates')}

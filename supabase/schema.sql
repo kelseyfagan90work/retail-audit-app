@@ -13,10 +13,10 @@ create table stores (
   id serial primary key,
   store_number text not null unique,
   store_name text not null,
-  district text not null,             -- your team names districts after the DM, e.g. "Jamie Rivera" — that's fine, this is just a label/grouping key
-  store_manager_name text,
-  store_manager_email text,           -- report emails go here...
-  district_manager_email text,        -- ...and here — both get the report if both are set
+  region text,                        -- broader grouping, e.g. "Northeast"
+  district_manager text not null,     -- the DM's name — this is what your team calls "district"
+  district_manager_email text,
+  store_email text,                   -- report emails go to this + district_manager_email, whichever are set
   is_active boolean not null default true
 );
 
@@ -87,7 +87,24 @@ create table audit_photos (
   uploaded_at timestamptz not null default now()
 );
 
-create index on stores (district);
+-- Tasks an admin assigns to a specific auditor — shows up on that person's
+-- dashboard. Optionally linked to a store and/or a specific audit for context.
+create table tasks (
+  id serial primary key,
+  title text not null,
+  description text,
+  store_id int references stores(id),
+  audit_id int references audits(id),
+  assigned_to_email text not null,
+  assigned_by_email text not null,
+  status text not null default 'open' check (status in ('open', 'done')),
+  due_date date,
+  created_at timestamptz not null default now(),
+  completed_at timestamptz
+);
+
+create index on stores (district_manager);
+create index on stores (region);
 create index on template_sections (template_id);
 create index on template_questions (section_id);
 create index on audits (store_id);
@@ -96,6 +113,8 @@ create index on audits (started_at);
 create index on audit_sections (audit_id);
 create index on audit_questions (audit_id);
 create index on audit_photos (audit_question_id);
+create index on tasks (assigned_to_email);
+create index on tasks (status);
 
 -- Row Level Security: the app's API routes use the service-role key (which
 -- bypasses RLS) and do their own role checks in code, so these policies are
@@ -110,6 +129,7 @@ alter table audits enable row level security;
 alter table audit_sections enable row level security;
 alter table audit_questions enable row level security;
 alter table audit_photos enable row level security;
+alter table tasks enable row level security;
 
 create policy "users can read their own profile" on profiles
   for select using (auth.uid() = id);
@@ -118,8 +138,8 @@ create policy "users can read their own profile" on profiles
 -- All real access goes through the Next.js API routes using the service-role key.
 
 -- Seed example data once you've created your Supabase auth users (see README):
--- insert into stores (store_number, store_name, district, store_manager_name, store_manager_email, district_manager_email)
---   values ('0142', 'Main St', 'Jamie Rivera', 'Sam Lee', 'sam@example.com', 'jamie@example.com');
+-- insert into stores (store_number, store_name, region, district_manager, district_manager_email, store_email)
+--   values ('0142', 'Main St', 'Northeast', 'Jamie Rivera', 'jamie@example.com', 'store142@example.com');
 --
 -- insert into audit_templates (name, description) values ('Monthly Store Standards', 'Standard monthly walkthrough');
 -- insert into template_sections (template_id, name, sort_order) values (1, 'Front of Store', 0);

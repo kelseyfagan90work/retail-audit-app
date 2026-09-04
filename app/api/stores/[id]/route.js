@@ -13,9 +13,9 @@ export async function PATCH(request, { params }) {
   const updates = {};
   if ('storeNumber' in body) updates.store_number = body.storeNumber;
   if ('storeName' in body) updates.store_name = body.storeName;
-  if ('district' in body) updates.district = body.district;
-  if ('storeManagerName' in body) updates.store_manager_name = body.storeManagerName;
-  if ('storeManagerEmail' in body) updates.store_manager_email = body.storeManagerEmail;
+  if ('region' in body) updates.region = body.region;
+  if ('districtManager' in body) updates.district_manager = body.districtManager;
+  if ('storeEmail' in body) updates.store_email = body.storeEmail;
   if ('districtManagerEmail' in body) updates.district_manager_email = body.districtManagerEmail;
   if ('isActive' in body) updates.is_active = body.isActive;
 

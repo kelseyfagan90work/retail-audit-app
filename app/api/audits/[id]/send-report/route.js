@@ -13,15 +13,15 @@ export async function POST(request, { params }) {
 
   const { data: audit, error } = await admin
     .from('audits')
-    .select('*, stores(store_number, store_name, district, store_manager_name, store_manager_email, district_manager_email)')
+    .select('*, stores(store_number, store_name, region, district_manager, store_email, district_manager_email)')
     .eq('id', params.id)
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 404 });
   if (audit.status !== 'completed') return NextResponse.json({ error: 'Complete the audit before sending a report.' }, { status: 400 });
 
-  const recipients = [audit.stores.store_manager_email, audit.stores.district_manager_email].filter(Boolean);
+  const recipients = [audit.stores.store_email, audit.stores.district_manager_email].filter(Boolean);
   if (recipients.length === 0) {
-    return NextResponse.json({ error: 'This store has no store manager or district manager email on file.' }, { status: 400 });
+    return NextResponse.json({ error: 'This store has no store email or district manager email on file.' }, { status: 400 });
   }
 
   const { data: sections } = await admin.from('audit_sections').select('id, name, sort_order').eq('audit_id', params.id).order('sort_order');

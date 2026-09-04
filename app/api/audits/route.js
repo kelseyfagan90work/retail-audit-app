@@ -12,7 +12,7 @@ export async function GET(request) {
   const admin = createAdminClient();
   let query = admin
     .from('audits')
-    .select('*, stores(store_number, store_name, district)')
+    .select('*, stores(store_number, store_name, region, district_manager)')
     .order('started_at', { ascending: false });
   if (status) query = query.eq('status', status);
 

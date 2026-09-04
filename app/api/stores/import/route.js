@@ -18,24 +18,24 @@ export async function POST(request) {
   rows.forEach((r, i) => {
     const storeNumber = (r.storeNumber || '').toString().trim();
     const storeName = (r.storeName || '').toString().trim();
-    const district = (r.district || '').toString().trim();
-    if (!storeNumber || !storeName || !district) {
-      skipped.push({ row: i + 1, reason: 'Missing store number, name, or district' });
+    const districtManager = (r.districtManager || '').toString().trim();
+    if (!storeNumber || !storeName || !districtManager) {
+      skipped.push({ row: i + 1, reason: 'Missing store number, name, or district manager' });
       return;
     }
     cleaned.push({
       store_number: storeNumber,
       store_name: storeName,
-      district,
-      store_manager_name: (r.storeManagerName || '').toString().trim() || null,
-      store_manager_email: (r.storeManagerEmail || '').toString().trim() || null,
+      region: (r.region || '').toString().trim() || null,
+      district_manager: districtManager,
       district_manager_email: (r.districtManagerEmail || '').toString().trim() || null,
+      store_email: (r.storeEmail || '').toString().trim() || null,
       is_active: true,
     });
   });
 
   if (cleaned.length === 0) {
-    return NextResponse.json({ error: 'No valid rows found. Check that every row has a store number, name, and district.' }, { status: 400 });
+    return NextResponse.json({ error: 'No valid rows found. Check that every row has a store number, name, and district manager.' }, { status: 400 });
   }
 
   const admin = createAdminClient();

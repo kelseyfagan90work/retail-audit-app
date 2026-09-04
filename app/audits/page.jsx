@@ -38,7 +38,7 @@ function AuditsContent() {
                 <div>
                   <div style={{ fontWeight: 600 }}>{a.stores.store_number} — {a.stores.store_name}</div>
                   <div style={{ color: 'var(--ink-soft)', fontSize: 13 }}>
-                    {a.template_name} · {a.stores.district} · {new Date(a.started_at).toLocaleDateString()}
+                    {a.template_name} · {a.stores.district_manager} · {new Date(a.started_at).toLocaleDateString()}
                   </div>
                 </div>
                 {a.status === 'completed' ? <ScoreRing score={a.overall_score} size={48} /> : <span className="badge in_progress">In progress</span>}

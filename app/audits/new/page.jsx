@@ -45,7 +45,7 @@ function NewAuditContent() {
         <select value={storeId} onChange={(e) => setStoreId(e.target.value)} style={{ width: '100%' }}>
           <option value="">Select a store...</option>
           {stores.map((s) => (
-            <option key={s.id} value={s.id}>{s.store_number} — {s.store_name} ({s.district})</option>
+            <option key={s.id} value={s.id}>{s.store_number} — {s.store_name} ({s.district_manager})</option>
           ))}
         </select>
       </div>
