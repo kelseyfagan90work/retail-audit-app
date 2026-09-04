@@ -31,7 +31,15 @@ function SignInForm({ onRequestAccess }) {
 
   return (
     <div className="card">
-      <h1>RADAR</h1>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+        <svg width="28" height="28" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="13" cy="13" r="11" stroke="#2dd4bf" strokeWidth="1.5" opacity="0.35" />
+          <circle cx="13" cy="13" r="7" stroke="#2dd4bf" strokeWidth="1.5" opacity="0.6" />
+          <circle cx="13" cy="13" r="2.5" fill="#2dd4bf" />
+          <line x1="13" y1="13" x2="20.5" y2="6.5" stroke="#2dd4bf" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+        <h1 style={{ margin: 0 }}>RADAR</h1>
+      </div>
       <p style={{ color: 'var(--ink-soft)', marginTop: 0 }}>Sign in to continue.</p>
       {error && <div style={{ color: 'var(--rejected)', marginBottom: 10 }}>{error}</div>}
       <form onSubmit={handleSubmit}>
