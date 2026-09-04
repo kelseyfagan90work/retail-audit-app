@@ -50,6 +50,7 @@ export async function POST(request) {
       template_id: templateId,
       template_name: template.name,
       auditor_email: user.email,
+      auditor_name: user.displayName,
     })
     .select()
     .single();

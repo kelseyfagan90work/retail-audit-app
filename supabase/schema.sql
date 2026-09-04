@@ -11,8 +11,8 @@ create table profiles (
 
 create table stores (
   id serial primary key,
-  store_number text not null unique,
-  store_name text not null,
+  store_number text unique,           -- auto-assigned (see app code) — not something anyone types in
+  store_name text not null unique,    -- the real identifier now
   region text,                        -- broader grouping, e.g. "Northeast"
   district_manager text not null,     -- the DM's name — this is what your team calls "district"
   district_manager_email text,
@@ -53,6 +53,7 @@ create table audits (
   template_id int references audit_templates(id),  -- kept for reference; nullable in case the template is later deleted
   template_name text not null,                       -- snapshot, so the audit still shows a name even if the template is renamed/deleted
   auditor_email text not null,
+  auditor_name text,
   status text not null default 'in_progress' check (status in ('in_progress', 'completed')),
   overall_score numeric,                              -- percentage, 0-100, filled in on completion
   announced boolean,                                  -- null = not set, true = announced, false = unannounced

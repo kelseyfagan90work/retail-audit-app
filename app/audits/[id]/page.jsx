@@ -47,7 +47,7 @@ function QuestionRow({ question, auditId, readOnly, onChanged }) {
 
       {!readOnly && (
         <textarea
-          placeholder="Optional note... (click a selected Yes/No/N/A again to clear it)"
+          placeholder="Optional note..."
           value={note}
           onChange={(e) => setNote(e.target.value)}
           onBlur={saveNote}
@@ -82,8 +82,58 @@ function QuestionRow({ question, auditId, readOnly, onChanged }) {
   );
 }
 
+function SectionTaskButton({ section, audit, users }) {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState(`Follow up: ${section.name} at ${audit.stores.store_name}`);
+  const [assignedToEmail, setAssignedToEmail] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+
+  async function submit() {
+    if (!title || !assignedToEmail) return;
+    setBusy(true);
+    try {
+      await api.createTask({
+        title,
+        description: `From ${section.name} on the ${audit.template_name} audit.`,
+        storeId: audit.store_id,
+        auditId: audit.id,
+        assignedToEmail,
+        dueDate: dueDate || null,
+      });
+      setDone(true);
+      setOpen(false);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div>
+      <button className="ghost small" onClick={() => setOpen((o) => !o)}>
+        {done ? '✓ Task added' : open ? 'Cancel' : '+ Task'}
+      </button>
+      {open && (
+        <div style={{ marginTop: 10, padding: 12, background: 'var(--card-raised)', borderRadius: 8 }}>
+          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: '100%', marginBottom: 8 }} />
+          <div className="grid grid-2">
+            <select value={assignedToEmail} onChange={(e) => setAssignedToEmail(e.target.value)}>
+              <option value="">Assign to...</option>
+              {users.map((u) => <option key={u.id} value={u.email}>{u.display_name}</option>)}
+            </select>
+            <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+          </div>
+          <button className="primary small" style={{ marginTop: 8 }} onClick={submit} disabled={busy || !title || !assignedToEmail}>Assign</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AuditContent({ auditId, user }) {
   const [audit, setAudit] = useState(null);
+  const [users, setUsers] = useState([]);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [reportStatus, setReportStatus] = useState(null);
@@ -97,7 +147,7 @@ function AuditContent({ auditId, user }) {
     setManagerOnShift(data.manager_on_shift || '');
     setOverallNote(data.overall_note || '');
   }
-  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, [auditId]);
+  useEffect(() => { refresh(); api.getUsers().then(setUsers); /* eslint-disable-next-line */ }, [auditId]);
 
   if (!audit) return <div className="card">Loading...</div>;
 
@@ -188,7 +238,7 @@ function AuditContent({ auditId, user }) {
               {audit.template_name}{audit.stores.region ? ` · ${audit.stores.region}` : ''}
             </div>
             <div style={{ color: 'var(--ink-soft)', fontSize: 13, marginTop: 6, lineHeight: 1.7 }}>
-              Auditor: {audit.auditor_email}<br />
+              Auditor: {audit.auditor_name || audit.auditor_email}<br />
               Started: {new Date(audit.started_at).toLocaleString()}<br />
               {audit.completed_at && <>Completed: {new Date(audit.completed_at).toLocaleString()}<br /></>}
               {answeredCount}/{allQuestions.length} answered
@@ -249,9 +299,15 @@ function AuditContent({ auditId, user }) {
         )}
       </div>
 
-      {audit.sections.map((section) => (
+      {audit.sections.map((section, i) => (
         <div className="card audit-section" key={section.id}>
-          <h2>{section.name}</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span className="section-index">{i + 1}</span>
+              <h2 style={{ margin: 0 }}>{section.name}</h2>
+            </div>
+            <SectionTaskButton section={section} audit={audit} users={users} />
+          </div>
           {section.questions.map((q) => (
             <QuestionRow key={q.id} question={q} auditId={auditId} readOnly={readOnly} onChanged={refresh} />
           ))}

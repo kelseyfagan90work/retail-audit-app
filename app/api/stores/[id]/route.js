@@ -11,7 +11,6 @@ export async function PATCH(request, { params }) {
   const body = await request.json();
   const admin = createAdminClient();
   const updates = {};
-  if ('storeNumber' in body) updates.store_number = body.storeNumber;
   if ('storeName' in body) updates.store_name = body.storeName;
   if ('region' in body) updates.region = body.region;
   if ('districtManager' in body) updates.district_manager = body.districtManager;

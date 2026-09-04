@@ -129,7 +129,12 @@ tbody tr:hover td { background: rgba(255, 255, 255, 0.02); }
 .auth-shell input { width: 100%; }
 
 /* Audit-taking screen */
-.audit-section { margin-bottom: 22px; }
+.audit-section { margin-bottom: 24px; border-top: 3px solid var(--accent); }
+.section-index {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 50%; background: var(--accent-soft); color: var(--accent);
+  font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 12px; flex-shrink: 0;
+}
 .audit-question { padding: 14px 0; border-bottom: 1px solid var(--line); }
 .audit-question:last-child { border-bottom: none; }
 .audit-question-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
