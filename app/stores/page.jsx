@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import AppFrame from '@/components/AppFrame';
 import { api } from '@/lib/api';
+import StoresImportPanel from '@/components/StoresImportPanel';
 
 function StoresContent() {
   const [stores, setStores] = useState(null);
@@ -35,6 +36,8 @@ function StoresContent() {
 
   return (
     <div>
+      <StoresImportPanel onImported={refresh} />
+
       <div className="card">
         <h1>Stores</h1>
         <p style={{ color: 'var(--ink-soft)' }}>The manager email here is where audit reports get sent.</p>

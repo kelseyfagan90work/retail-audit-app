@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import AppFrame from '@/components/AppFrame';
 import { api } from '@/lib/api';
+import TemplateImportPanel from '@/components/TemplateImportPanel';
 
 function TemplatesContent() {
   const [templates, setTemplates] = useState(null);
@@ -37,6 +38,8 @@ function TemplatesContent() {
           <button className="primary" onClick={create} disabled={busy}>Create</button>
         </div>
       </div>
+
+      <TemplateImportPanel />
 
       {!templates && <div className="card">Loading...</div>}
       {templates && templates.filter((t) => t.is_active).map((t) => (
