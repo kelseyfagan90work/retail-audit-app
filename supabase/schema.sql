@@ -13,9 +13,10 @@ create table stores (
   id serial primary key,
   store_number text not null unique,
   store_name text not null,
-  district text not null,
-  manager_name text,
-  manager_email text,
+  district text not null,             -- your team names districts after the DM, e.g. "Jamie Rivera" — that's fine, this is just a label/grouping key
+  store_manager_name text,
+  store_manager_email text,           -- report emails go here...
+  district_manager_email text,        -- ...and here — both get the report if both are set
   is_active boolean not null default true
 );
 
@@ -117,8 +118,8 @@ create policy "users can read their own profile" on profiles
 -- All real access goes through the Next.js API routes using the service-role key.
 
 -- Seed example data once you've created your Supabase auth users (see README):
--- insert into stores (store_number, store_name, district, manager_name, manager_email)
---   values ('0142', 'Main St', 'North District', 'Jamie Rivera', 'jamie@example.com');
+-- insert into stores (store_number, store_name, district, store_manager_name, store_manager_email, district_manager_email)
+--   values ('0142', 'Main St', 'Jamie Rivera', 'Sam Lee', 'sam@example.com', 'jamie@example.com');
 --
 -- insert into audit_templates (name, description) values ('Monthly Store Standards', 'Standard monthly walkthrough');
 -- insert into template_sections (template_id, name, sort_order) values (1, 'Front of Store', 0);

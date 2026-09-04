@@ -27,8 +27,9 @@ export async function POST(request) {
       store_number: storeNumber,
       store_name: storeName,
       district,
-      manager_name: (r.managerName || '').toString().trim() || null,
-      manager_email: (r.managerEmail || '').toString().trim() || null,
+      store_manager_name: (r.storeManagerName || '').toString().trim() || null,
+      store_manager_email: (r.storeManagerEmail || '').toString().trim() || null,
+      district_manager_email: (r.districtManagerEmail || '').toString().trim() || null,
       is_active: true,
     });
   });

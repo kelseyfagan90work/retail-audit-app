@@ -14,8 +14,9 @@ export async function PATCH(request, { params }) {
   if ('storeNumber' in body) updates.store_number = body.storeNumber;
   if ('storeName' in body) updates.store_name = body.storeName;
   if ('district' in body) updates.district = body.district;
-  if ('managerName' in body) updates.manager_name = body.managerName;
-  if ('managerEmail' in body) updates.manager_email = body.managerEmail;
+  if ('storeManagerName' in body) updates.store_manager_name = body.storeManagerName;
+  if ('storeManagerEmail' in body) updates.store_manager_email = body.storeManagerEmail;
+  if ('districtManagerEmail' in body) updates.district_manager_email = body.districtManagerEmail;
   if ('isActive' in body) updates.is_active = body.isActive;
 
   const { data, error } = await admin.from('stores').update(updates).eq('id', params.id).select().single();

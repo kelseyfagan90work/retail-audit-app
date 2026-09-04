@@ -26,8 +26,9 @@ export async function POST(request) {
       store_number: body.storeNumber,
       store_name: body.storeName,
       district: body.district,
-      manager_name: body.managerName || null,
-      manager_email: body.managerEmail || null,
+      store_manager_name: body.storeManagerName || null,
+      store_manager_email: body.storeManagerEmail || null,
+      district_manager_email: body.districtManagerEmail || null,
     })
     .select()
     .single();

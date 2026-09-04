@@ -13,7 +13,7 @@ export async function GET(request, { params }) {
 
   const { data: audit, error } = await admin
     .from('audits')
-    .select('*, stores(store_number, store_name, district, manager_name, manager_email)')
+    .select('*, stores(store_number, store_name, district, store_manager_name, store_manager_email, district_manager_email)')
     .eq('id', params.id)
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 404 });

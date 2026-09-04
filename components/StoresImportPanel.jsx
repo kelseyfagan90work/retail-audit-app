@@ -7,15 +7,16 @@ import { parseCsvFile, normalizeRows, downloadCsvExample } from '@/lib/csv';
 const FIELD_MAP = {
   storeNumber: ['Store Number', 'Store #', 'store_number', 'storeNumber'],
   storeName: ['Store Name', 'store_name', 'storeName'],
-  district: ['District', 'district'],
-  managerName: ['Manager Name', 'manager_name', 'managerName'],
-  managerEmail: ['Manager Email', 'manager_email', 'managerEmail', 'Email'],
+  district: ['District', 'District Manager', 'district', 'DM'],
+  districtManagerEmail: ['District Manager Email', 'DM Email', 'district_manager_email', 'districtManagerEmail'],
+  storeManagerName: ['Store Manager Name', 'Manager Name', 'store_manager_name', 'storeManagerName'],
+  storeManagerEmail: ['Store Manager Email', 'Manager Email', 'store_manager_email', 'storeManagerEmail'],
 };
 
-const EXAMPLE_CSV = `Store Number,Store Name,District,Manager Name,Manager Email
-0142,Main St,North District,Jamie Rivera,jamie@example.com
-0187,Riverside,North District,Sam Lee,sam@example.com
-0203,Oak Plaza,South District,Alex Kim,alex@example.com`;
+const EXAMPLE_CSV = `Store Number,Store Name,District,District Manager Email,Store Manager Name,Store Manager Email
+0142,Main St,Jamie Rivera,jamie@example.com,Sam Lee,sam@example.com
+0187,Riverside,Jamie Rivera,jamie@example.com,Pat Nguyen,pat@example.com
+0203,Oak Plaza,Alex Kim,alex@example.com,Chris Park,chris@example.com`;
 
 export default function StoresImportPanel({ onImported }) {
   const [rows, setRows] = useState(null);
@@ -57,7 +58,7 @@ export default function StoresImportPanel({ onImported }) {
     <div className="card">
       <h2>Import stores from CSV</h2>
       <p style={{ color: 'var(--ink-soft)', fontSize: 13 }}>
-        Columns: Store Number, Store Name, District, Manager Name, Manager Email (name/email are optional).
+        Columns: Store Number, Store Name, District (your DM's name), District Manager Email, Store Manager Name, Store Manager Email (all but the first three are optional).
         Re-uploading later updates existing stores by Store Number instead of duplicating them.
       </p>
       <button className="ghost small" onClick={() => downloadCsvExample('stores-example.csv', EXAMPLE_CSV)}>
@@ -92,7 +93,7 @@ export default function StoresImportPanel({ onImported }) {
           <div style={{ maxHeight: 220, overflow: 'auto', border: '1px solid var(--line)', borderRadius: 8 }}>
             <table>
               <thead>
-                <tr><th>Store #</th><th>Name</th><th>District</th><th>Manager</th><th>Email</th></tr>
+                <tr><th>Store #</th><th>Name</th><th>District (DM)</th><th>DM Email</th><th>Store Mgr</th><th>Store Mgr Email</th></tr>
               </thead>
               <tbody>
                 {rows.slice(0, 50).map((r, i) => (
@@ -100,8 +101,9 @@ export default function StoresImportPanel({ onImported }) {
                     <td>{r.storeNumber}</td>
                     <td>{r.storeName}</td>
                     <td>{r.district}</td>
-                    <td>{r.managerName}</td>
-                    <td>{r.managerEmail}</td>
+                    <td>{r.districtManagerEmail}</td>
+                    <td>{r.storeManagerName}</td>
+                    <td>{r.storeManagerEmail}</td>
                   </tr>
                 ))}
               </tbody>

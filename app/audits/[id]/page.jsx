@@ -118,7 +118,7 @@ function AuditContent({ auditId }) {
     setReportStatus(null);
     try {
       const res = await api.sendReport(auditId);
-      setReportStatus({ ok: true, message: `Report sent to ${res.sentTo}.` });
+      setReportStatus({ ok: true, message: `Report sent to ${res.sentTo.join(', ')}.` });
     } catch (e) {
       setReportStatus({ ok: false, message: e.message });
     } finally {
@@ -151,10 +151,10 @@ function AuditContent({ auditId }) {
 
         {readOnly && (
           <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button className="primary" onClick={sendReport} disabled={busy || !audit.stores.manager_email}>
+            <button className="primary" onClick={sendReport} disabled={busy || (!audit.stores.store_manager_email && !audit.stores.district_manager_email)}>
               {audit.report_sent_at ? 'Resend report to store' : 'Send report to store'}
             </button>
-            {!audit.stores.manager_email && <span style={{ fontSize: 13, color: 'var(--ink-soft)' }}>No manager email on file for this store.</span>}
+            {!audit.stores.store_manager_email && !audit.stores.district_manager_email && <span style={{ fontSize: 13, color: 'var(--ink-soft)' }}>No store or district manager email on file for this store.</span>}
             {audit.report_sent_at && <span style={{ fontSize: 13, color: 'var(--ink-soft)' }}>Last sent {new Date(audit.report_sent_at).toLocaleString()}</span>}
           </div>
         )}
