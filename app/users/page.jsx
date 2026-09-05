@@ -117,7 +117,7 @@ function UsersContent() {
       <div className="card">
         <h1>Users</h1>
         <p style={{ color: 'var(--ink-soft)' }}>
-          Invite someone and they'll get an email with a link to set their password and sign in — no manual setup on your end.
+          Invite someone and they'll get an email with a link to set their password and sign in.
         </p>
         {error && <div style={{ color: 'var(--rejected)', margin: '8px 0' }}>{error}</div>}
         {notice && <div style={{ color: 'var(--approved)', margin: '8px 0' }}>{notice}</div>}
