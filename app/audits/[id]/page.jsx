@@ -331,7 +331,7 @@ function AuditContent({ auditId, user }) {
       ))}
 
       <div className="card">
-        <h2>Overall notes</h2>
+        <h2>Comments</h2>
         <textarea
           placeholder="Any additional notes about this visit..."
           value={overallNote}
