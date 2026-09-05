@@ -158,7 +158,7 @@ function ReportsContent() {
       <div className="card" style={{ padding: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 22px 0' }}>
           <div>
-            <h2>All Scores</h2>
+            <h2>All scores</h2>
             <p style={{ color: 'var(--ink-soft)', fontSize: 13, margin: 0 }}>One row per store, one column per audit type — export and paste straight into your scoring sheet. Ignores the audit-type filter above (shows every type). Best used with a single month selected.</p>
           </div>
           <button className="ghost small" disabled={!matrixData || matrixData.stores.length === 0} onClick={exportMatrix}>Export CSV</button>
@@ -213,7 +213,7 @@ function ReportsContent() {
 
       <div className="card" style={{ padding: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 22px 0' }}>
-          <h2>Categorical Scores</h2>
+          <h2>Audits</h2>
           <button className="ghost small" disabled={!auditsData || auditsData.length === 0} onClick={exportAudits}>Export CSV</button>
         </div>
         {!auditsData && <div style={{ padding: 20, color: 'var(--ink-soft)' }}>Loading...</div>}
@@ -245,7 +245,7 @@ function ReportsContent() {
       <div className="card" style={{ padding: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 22px 0' }}>
           <div>
-            <h2>Criteria Misses</h2>
+            <h2>Criteria misses</h2>
             <p style={{ color: 'var(--ink-soft)', fontSize: 13, margin: 0 }}>Same question failing across many stores usually means a training gap or an unrealistic standard — most-missed first.</p>
           </div>
           <button className="ghost small" disabled={!criteriaData || criteriaData.length === 0} onClick={exportCriteria}>Export CSV</button>
