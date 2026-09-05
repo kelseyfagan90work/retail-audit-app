@@ -73,7 +73,7 @@ function UsersContent() {
     setError(null);
     setNotice(null);
     try {
-      await api.inviteUser({ ...form, redirectTo: window.location.origin });
+      await api.inviteUser({ ...form, redirectTo: `${window.location.origin}/auth/callback` });
       setNotice(`Invite sent to ${form.email}.`);
       const matchingRequest = requests.find((r) => r.email.toLowerCase() === form.email.toLowerCase());
       if (matchingRequest) await api.updateInviteRequest(matchingRequest.id, 'invited');
