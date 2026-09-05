@@ -159,7 +159,7 @@ function DashboardContent(user) {
 
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2>Stores below threshold</h2>
+          <h2>Stores Below Threshold</h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-soft)' }}>
             Below <input type="number" value={threshold} onChange={(e) => setThreshold(Number(e.target.value))} style={{ width: 60 }} />%
           </div>
@@ -184,7 +184,7 @@ function DashboardContent(user) {
       </div>
 
       <div className="card">
-        <h2>Outstanding audits</h2>
+        <h2>Outstanding Audits</h2>
         {data && data.outstandingAudits.length === 0 && <div className="empty-state">Nothing in progress right now.</div>}
         {data && data.outstandingAudits.length > 0 && (
           <table>
