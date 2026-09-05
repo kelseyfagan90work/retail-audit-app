@@ -10,6 +10,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (user === null) router.replace('/login');
+    else if (user === 'needs-password') router.replace('/set-password');
     else if (user && user !== 'unprovisioned') router.replace('/dashboard');
   }, [user, router]);
 

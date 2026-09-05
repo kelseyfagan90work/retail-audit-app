@@ -6,6 +6,7 @@ create table profiles (
   email text not null unique,
   display_name text not null,
   role text not null check (role in ('admin', 'auditor')),
+  password_set boolean not null default false,  -- false for freshly-invited people until they choose a password
   created_at timestamptz not null default now()
 );
 

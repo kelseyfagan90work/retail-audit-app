@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { api } from '@/lib/api';
 
-function SignInForm({ onRequestAccess }) {
+function SignInForm({ onRequestAccess, onForgotPassword }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -47,7 +47,10 @@ function SignInForm({ onRequestAccess }) {
         <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         <button className="primary" type="submit" disabled={busy}>Sign in</button>
       </form>
-      <div style={{ marginTop: 14, fontSize: 13 }}>
+      <div style={{ marginTop: 10, fontSize: 13 }}>
+        <a href="#" onClick={(e) => { e.preventDefault(); onForgotPassword(); }}>Forgot password?</a>
+      </div>
+      <div style={{ marginTop: 8, fontSize: 13 }}>
         New here? <a href="#" onClick={(e) => { e.preventDefault(); onRequestAccess(); }}>Request access</a>
       </div>
     </div>
@@ -104,16 +107,64 @@ function RequestAccessForm({ onBack }) {
   );
 }
 
+function ForgotPasswordForm({ onBack }) {
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState(null);
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const supabase = createClient();
+
+  async function submit(e) {
+    e.preventDefault();
+    setError(null);
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      });
+      if (error) throw error;
+      setSent(true);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (sent) {
+    return (
+      <div className="card">
+        <h1>Check your email</h1>
+        <p style={{ color: 'var(--ink-soft)' }}>If an account exists for {email}, a reset link is on its way.</p>
+        <button className="ghost" onClick={onBack}>Back to sign in</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card">
+      <h1>Reset your password</h1>
+      <p style={{ color: 'var(--ink-soft)', marginTop: 0 }}>We'll email you a link to choose a new one.</p>
+      {error && <div style={{ color: 'var(--rejected)', marginBottom: 10 }}>{error}</div>}
+      <form onSubmit={submit}>
+        <input type="email" placeholder="Your email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <button className="primary" type="submit" disabled={busy}>{busy ? 'Sending...' : 'Send reset link'}</button>
+      </form>
+      <div style={{ marginTop: 14, fontSize: 13 }}>
+        <a href="#" onClick={(e) => { e.preventDefault(); onBack(); }}>Back to sign in</a>
+      </div>
+    </div>
+  );
+}
+
 export default function LoginPage() {
   const [mode, setMode] = useState('sign-in');
 
   return (
     <div className="auth-shell">
-      {mode === 'sign-in' ? (
-        <SignInForm onRequestAccess={() => setMode('request')} />
-      ) : (
-        <RequestAccessForm onBack={() => setMode('sign-in')} />
-      )}
+      {mode === 'sign-in' && <SignInForm onRequestAccess={() => setMode('request')} onForgotPassword={() => setMode('forgot')} />}
+      {mode === 'request' && <RequestAccessForm onBack={() => setMode('sign-in')} />}
+      {mode === 'forgot' && <ForgotPasswordForm onBack={() => setMode('sign-in')} />}
     </div>
   );
 }

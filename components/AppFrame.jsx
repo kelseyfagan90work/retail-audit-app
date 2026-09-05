@@ -11,10 +11,12 @@ export default function AppFrame({ adminOnly = false, children }) {
 
   useEffect(() => {
     if (user === null) router.push('/login');
+    else if (user === 'needs-password') router.push('/set-password');
   }, [user, router]);
 
   if (user === undefined) return <div className="app-shell">Loading...</div>;
   if (user === null) return null;
+  if (user === 'needs-password') return null;
   if (user === 'unprovisioned') {
     return (
       <div className="app-shell">

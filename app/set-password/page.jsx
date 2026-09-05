@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { api } from '@/lib/api';
 
 export default function SetPasswordPage() {
   const [password, setPassword] = useState('');
@@ -36,6 +37,7 @@ export default function SetPasswordPage() {
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
+      await api.markPasswordSet();
       router.push('/');
       router.refresh();
     } catch (e) {
@@ -51,7 +53,7 @@ export default function SetPasswordPage() {
     <div className="auth-shell">
       <div className="card">
         <h1>Set your password</h1>
-        <p style={{ color: 'var(--ink-soft)', marginTop: 0 }}>Choose a password to finish setting up your RADAR account.</p>
+        <p style={{ color: 'var(--ink-soft)', marginTop: 0 }}>Choose a password to continue to RADAR.</p>
         {error && <div style={{ color: 'var(--rejected)', marginBottom: 10 }}>{error}</div>}
         <form onSubmit={submit}>
           <input type="password" placeholder="New password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />

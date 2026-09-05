@@ -14,5 +14,6 @@ export async function GET() {
     email: profile.email,
     displayName: profile.display_name,
     role: profile.role,
+    passwordSet: profile.password_set,
   });
 }
