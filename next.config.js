@@ -11,6 +11,7 @@ const nextConfig = {
   experimental: {
     outputFileTracingIncludes: {
       '/api/audits/[id]/export-pdf': ['./node_modules/pdfkit/js/**/*'],
+      '/api/reports/send-bulk': ['./node_modules/pdfkit/js/**/*'],
     },
   },
 };

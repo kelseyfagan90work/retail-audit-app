@@ -121,6 +121,7 @@ function TasksPanel({ user, storeId, auditorEmail }) {
 
 function DashboardContent(user) {
   const [threshold, setThreshold] = useState(80);
+  const [overdueDays, setOverdueDays] = useState(30);
   const [stores, setStores] = useState([]);
   const [users, setUsers] = useState([]);
   const [storeId, setStoreId] = useState('');
@@ -133,11 +134,11 @@ function DashboardContent(user) {
   }, []);
 
   useEffect(() => {
-    const params = { threshold };
+    const params = { threshold, overdueDays };
     if (storeId) params.storeId = storeId;
     if (auditorEmail) params.auditorEmail = auditorEmail;
     api.getDashboardSummary(params).then(setData);
-  }, [threshold, storeId, auditorEmail]);
+  }, [threshold, overdueDays, storeId, auditorEmail]);
 
   return (
     <div>
@@ -182,6 +183,31 @@ function DashboardContent(user) {
           </table>
         )}
       </div>
+
+      <details className="card">
+        <summary style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', listStyle: 'none' }}>
+          <h2 style={{ display: 'inline', margin: 0 }}>
+            Overdue for audit {data && `(${data.overdueStores.length})`}
+          </h2>
+        </summary>
+        <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-soft)' }}>
+          No audit in <input type="number" value={overdueDays} onChange={(e) => setOverdueDays(Number(e.target.value))} style={{ width: 60 }} /> days
+        </div>
+        {data && data.overdueStores.length === 0 && <div className="empty-state">Every store's been audited recently.</div>}
+        {data && data.overdueStores.length > 0 && (
+          <table style={{ marginTop: 10 }}>
+            <thead><tr><th>Store</th><th>Last audit</th></tr></thead>
+            <tbody>
+              {data.overdueStores.map((s) => (
+                <tr key={s.storeId}>
+                  <td>{s.storeName}</td>
+                  <td>{s.neverAudited ? 'Never' : new Date(s.lastAuditDate).toLocaleDateString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </details>
 
       <div className="card">
         <h2>Outstanding audits</h2>

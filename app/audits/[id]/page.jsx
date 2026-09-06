@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import AppFrame from '@/components/AppFrame';
 import BackButton from '@/components/BackButton';
 import { api, uploadToStorage } from '@/lib/api';
@@ -141,6 +142,7 @@ function AuditContent({ auditId, user }) {
   const [managerOnShift, setManagerOnShift] = useState('');
   const [overallNote, setOverallNote] = useState('');
   const [auditPeriod, setAuditPeriod] = useState('');
+  const [history, setHistory] = useState(null);
   const router = useRouter();
 
   async function refresh() {
@@ -149,6 +151,7 @@ function AuditContent({ auditId, user }) {
     setManagerOnShift(data.manager_on_shift || '');
     setOverallNote(data.overall_note || '');
     setAuditPeriod(data.audit_period ? data.audit_period.slice(0, 7) : '');
+    api.getStoreHistory(data.store_id, auditId).then(setHistory);
   }
   useEffect(() => { refresh(); api.getUsers().then(setUsers); /* eslint-disable-next-line */ }, [auditId]);
 
@@ -314,6 +317,25 @@ function AuditContent({ auditId, user }) {
           <div style={{ marginTop: 8, color: reportStatus.ok ? 'var(--approved)' : 'var(--rejected)', fontSize: 13 }}>{reportStatus.message}</div>
         )}
       </div>
+
+      {history && history.length > 0 && (
+        <div className="card">
+          <h2>{audit.stores.store_name}'s recent audits</h2>
+          <div style={{ marginTop: 8 }}>
+            {history.map((h) => (
+              <Link href={`/audits/${h.id}`} key={h.id} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <div className="inline-edit-row" style={{ cursor: 'pointer' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{h.template_name}</div>
+                    <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{h.audit_period ? h.audit_period.slice(0, 7) : new Date(h.completed_at).toLocaleDateString()}</div>
+                  </div>
+                  <ScoreRing score={h.overall_score} size={36} />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {audit.sections.map((section, i) => (
         <div className="card audit-section" key={section.id}>

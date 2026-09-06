@@ -10,6 +10,7 @@ export async function GET(request) {
 
   const params = request.nextUrl.searchParams;
   const threshold = Number(params.get('threshold') || 80);
+  const overdueDays = Number(params.get('overdueDays') || 30);
   const storeId = params.get('storeId');
   const auditorEmail = params.get('auditorEmail');
 
@@ -46,6 +47,19 @@ export async function GET(request) {
     }))
     .sort((a, b) => a.score - b.score);
 
+  const overdueCutoff = new Date(Date.now() - overdueDays * 24 * 60 * 60 * 1000);
+  const overdueStores = (stores || [])
+    .map((s) => ({ store: s, latest: latestByStore[s.id] }))
+    .filter(({ latest }) => !latest || new Date(latest.completed_at) < overdueCutoff)
+    .filter(({ latest }) => !auditorEmail || !latest || latest.auditor_email === auditorEmail)
+    .map(({ store, latest }) => ({
+      storeId: store.id,
+      storeName: store.store_name,
+      lastAuditDate: latest ? latest.completed_at : null,
+      neverAudited: !latest,
+    }))
+    .sort((a, b) => (a.lastAuditDate || '').localeCompare(b.lastAuditDate || ''));
+
   let inProgressQuery = admin
     .from('audits')
     .select('id, started_at, auditor_email, auditor_name, template_name, store_id, stores(store_name)')
@@ -64,5 +78,5 @@ export async function GET(request) {
     daysOpen: Math.floor((Date.now() - new Date(a.started_at).getTime()) / (24 * 60 * 60 * 1000)),
   }));
 
-  return NextResponse.json({ belowThreshold, outstandingAudits });
+  return NextResponse.json({ belowThreshold, overdueStores, outstandingAudits });
 }

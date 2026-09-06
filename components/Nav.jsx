@@ -50,6 +50,7 @@ export default function Nav({ user }) {
           {link('/dashboard', 'Dashboard')}
           {link('/audits', 'Audits')}
           {link('/reports', 'Reports')}
+          {link('/archive', 'Archive')}
           {user.role === 'admin' && (
             <div className="nav-dropdown" ref={menuRef}>
               <button

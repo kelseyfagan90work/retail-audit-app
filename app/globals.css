@@ -200,7 +200,7 @@ tbody tr:hover td { background: rgba(255, 255, 255, 0.02); }
 .inline-edit-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .inline-edit-row:last-child { border-bottom: none; }
 .inline-edit-row input[type="text"] { flex: 1; }
-.inline-edit-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
 
 /* Mobile pass — this is how most audits actually get run */
 @media (max-width: 640px) {
