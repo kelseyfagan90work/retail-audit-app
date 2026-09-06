@@ -1,10 +1,76 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AppFrame from '@/components/AppFrame';
 import { api } from '@/lib/api';
 import ScoreRing from '@/components/ScoreRing';
+import MonthYearSelect from '@/components/MonthYearSelect';
+
+// Tracking only starts once you've actually cut over to this system — no
+// point flagging months you ran on the old spreadsheet as "missing."
+const TRACKING_START_MONTH = '2026-10';
+
+function defaultTrackingMonth() {
+  const now = new Date();
+  const current = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  return current < TRACKING_START_MONTH ? TRACKING_START_MONTH : current;
+}
+
+function MissingAuditsSection({ storeId }) {
+  const [month, setMonth] = useState(defaultTrackingMonth());
+  const [data, setData] = useState(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const params = { month };
+    if (storeId) params.storeId = storeId;
+    api.getMissingAudits(params).then(setData);
+  }, [month, storeId]);
+
+  const totalMissing = data ? data.templates.reduce((sum, t) => sum + t.missingCount, 0) : null;
+  const templatesWithGaps = data ? data.templates.filter((t) => t.missingCount > 0) : [];
+
+  function goToStore(templateId, store) {
+    if (store.existingAuditId) router.push(`/audits/${store.existingAuditId}`);
+    else router.push(`/audits/new?storeId=${store.storeId}&templateId=${templateId}&month=${month}`);
+  }
+
+  return (
+    <details className="card">
+      <summary style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', listStyle: 'none' }}>
+        <h2 style={{ display: 'inline', margin: 0 }}>
+          Audits needing completion{totalMissing !== null && ` (${totalMissing})`}
+        </h2>
+      </summary>
+
+      <div style={{ marginTop: 12, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 13, color: 'var(--ink-soft)' }}>Month:</span>
+        <MonthYearSelect value={month} onChange={setMonth} />
+      </div>
+
+      {!data && <div style={{ color: 'var(--ink-soft)' }}>Loading...</div>}
+      {data && templatesWithGaps.length === 0 && <div className="empty-state">Every audit type is complete for this month. Nice.</div>}
+
+      {templatesWithGaps.map((t) => (
+        <details key={t.templateId} style={{ marginTop: 8, borderTop: '1px solid var(--line)', paddingTop: 10 }}>
+          <summary style={{ cursor: 'pointer', fontWeight: 600, fontSize: 14, listStyle: 'none' }}>
+            {t.templateName} ({t.missingCount})
+          </summary>
+          <div style={{ marginTop: 8 }}>
+            {t.stores.map((s) => (
+              <div key={s.storeId} className="inline-edit-row" style={{ cursor: 'pointer' }} onClick={() => goToStore(t.templateId, s)}>
+                <div style={{ flex: 1, fontSize: 14 }}>{s.storeName}</div>
+                <span className="badge in_progress">{s.existingAuditId ? 'In progress' : 'Not started'}</span>
+              </div>
+            ))}
+          </div>
+        </details>
+      ))}
+    </details>
+  );
+}
 
 function TasksPanel({ user, storeId, auditorEmail }) {
   const [tasks, setTasks] = useState(null);
@@ -121,7 +187,6 @@ function TasksPanel({ user, storeId, auditorEmail }) {
 
 function DashboardContent(user) {
   const [threshold, setThreshold] = useState(80);
-  const [overdueDays, setOverdueDays] = useState(30);
   const [stores, setStores] = useState([]);
   const [users, setUsers] = useState([]);
   const [storeId, setStoreId] = useState('');
@@ -134,11 +199,11 @@ function DashboardContent(user) {
   }, []);
 
   useEffect(() => {
-    const params = { threshold, overdueDays };
+    const params = { threshold };
     if (storeId) params.storeId = storeId;
     if (auditorEmail) params.auditorEmail = auditorEmail;
     api.getDashboardSummary(params).then(setData);
-  }, [threshold, overdueDays, storeId, auditorEmail]);
+  }, [threshold, storeId, auditorEmail]);
 
   return (
     <div>
@@ -184,30 +249,7 @@ function DashboardContent(user) {
         )}
       </div>
 
-      <details className="card">
-        <summary style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', listStyle: 'none' }}>
-          <h2 style={{ display: 'inline', margin: 0 }}>
-            Overdue for audit {data && `(${data.overdueStores.length})`}
-          </h2>
-        </summary>
-        <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-soft)' }}>
-          No audit in <input type="number" value={overdueDays} onChange={(e) => setOverdueDays(Number(e.target.value))} style={{ width: 60 }} /> days
-        </div>
-        {data && data.overdueStores.length === 0 && <div className="empty-state">Every store's been audited recently.</div>}
-        {data && data.overdueStores.length > 0 && (
-          <table style={{ marginTop: 10 }}>
-            <thead><tr><th>Store</th><th>Last audit</th></tr></thead>
-            <tbody>
-              {data.overdueStores.map((s) => (
-                <tr key={s.storeId}>
-                  <td>{s.storeName}</td>
-                  <td>{s.neverAudited ? 'Never' : new Date(s.lastAuditDate).toLocaleDateString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </details>
+      <MissingAuditsSection storeId={storeId} />
 
       <div className="card">
         <h2>Outstanding audits</h2>

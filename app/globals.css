@@ -66,8 +66,9 @@ code { background: var(--card-raised); padding: 1px 6px; border-radius: 4px; fon
 .nav-brand-mark { width: 26px; height: 26px; flex-shrink: 0; }
 .nav-brand-name { font-weight: 800; font-size: 17px; letter-spacing: -0.02em; color: var(--ink); }
 
-.top-nav .links { display: flex; gap: 4px; flex-wrap: wrap; }
+.top-nav .links { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
 .top-nav .links a {
+  display: inline-flex; align-items: center; line-height: 1;
   color: var(--ink-soft); text-decoration: none; font-size: 13px; font-weight: 600;
   padding: 7px 14px; border-radius: 999px; border: 1px solid transparent; transition: all 0.15s;
 }
@@ -75,8 +76,9 @@ code { background: var(--card-raised); padding: 1px 6px; border-radius: 4px; fon
 .top-nav .links a.active { color: var(--ink); background: var(--card-raised); border-color: var(--line); }
 .top-nav .who { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--ink-soft); flex-shrink: 0; }
 
-.nav-dropdown { position: relative; }
+.nav-dropdown { position: relative; display: inline-flex; align-items: center; }
 .nav-dropdown-trigger {
+  display: inline-flex; align-items: center; line-height: 1; margin: 0;
   color: var(--ink-soft); font-size: 13px; font-weight: 600; font-family: 'Archivo', inherit;
   padding: 7px 14px; border-radius: 999px; border: 1px solid transparent; background: transparent; cursor: pointer;
 }

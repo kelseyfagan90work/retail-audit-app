@@ -1,18 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import AppFrame from '@/components/AppFrame';
 import BackButton from '@/components/BackButton';
 import MonthYearSelect from '@/components/MonthYearSelect';
 import { api } from '@/lib/api';
 
 function NewAuditContent() {
+  const searchParams = useSearchParams();
   const [stores, setStores] = useState([]);
   const [templates, setTemplates] = useState([]);
-  const [storeId, setStoreId] = useState('');
-  const [templateId, setTemplateId] = useState('');
-  const [auditPeriod, setAuditPeriod] = useState(new Date().toISOString().slice(0, 7));
+  const [storeId, setStoreId] = useState(searchParams.get('storeId') || '');
+  const [templateId, setTemplateId] = useState(searchParams.get('templateId') || '');
+  const [auditPeriod, setAuditPeriod] = useState(searchParams.get('month') || new Date().toISOString().slice(0, 7));
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const router = useRouter();
@@ -73,5 +74,13 @@ function NewAuditContent() {
 }
 
 export default function NewAuditPage() {
-  return <AppFrame>{() => <NewAuditContent />}</AppFrame>;
+  return (
+    <AppFrame>
+      {() => (
+        <Suspense fallback={<div className="card">Loading...</div>}>
+          <NewAuditContent />
+        </Suspense>
+      )}
+    </AppFrame>
+  );
 }
