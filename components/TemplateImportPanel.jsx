@@ -58,7 +58,7 @@ export default function TemplateImportPanel() {
 
   return (
     <div className="card">
-      <h2>Import a template from CSV</h2>
+      <h2>Import a Template from CSV</h2>
       <p style={{ color: 'var(--ink-soft)', fontSize: 13 }}>
         Two columns: Section and Question. One row per question — rows with the same section get grouped together, in the order they appear.
       </p>

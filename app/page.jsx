@@ -18,7 +18,7 @@ export default function HomePage() {
     return (
       <div className="app-shell">
         <div className="card empty-state">
-          <h2>Account not set up yet</h2>
+          <h2>Account Not Set Up Yet</h2>
           <p>You're logged in, but your account isn't linked to a role yet. Add yourself to the <code>profiles</code> table in Supabase (see the README).</p>
         </div>
       </div>

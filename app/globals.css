@@ -51,6 +51,8 @@ h2 { font-size: 17px; font-weight: 700; }
 h3 { font-size: 13px; color: var(--ink-soft); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
 
 a { color: var(--accent); }
+.clickable-name { color: var(--accent); font-weight: 600; }
+.clickable-name:hover { text-decoration: underline; }
 code { background: var(--card-raised); padding: 1px 6px; border-radius: 4px; font-size: 0.9em; }
 
 .app-shell { max-width: 1080px; margin: 0 auto; padding: 24px 20px 64px; }

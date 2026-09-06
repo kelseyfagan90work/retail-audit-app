@@ -320,7 +320,7 @@ function AuditContent({ auditId, user }) {
 
       {history && history.length > 0 && (
         <div className="card">
-          <h2>{audit.stores.store_name}'s recent audits</h2>
+          <h2>{audit.stores.store_name}'s Recent Audits</h2>
           <div style={{ marginTop: 8 }}>
             {history.map((h) => (
               <Link href={`/audits/${h.id}`} key={h.id} style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -353,7 +353,7 @@ function AuditContent({ auditId, user }) {
       ))}
 
       <div className="card">
-        <h2>Overall notes</h2>
+        <h2>Overall Notes</h2>
         <textarea
           placeholder="Any additional notes about this visit..."
           value={overallNote}

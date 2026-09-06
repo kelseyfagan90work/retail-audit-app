@@ -31,7 +31,7 @@ function TemplatesContent() {
   return (
     <div>
       <div className="card">
-        <h1>Audit templates</h1>
+        <h1>Audit Templates</h1>
         <p style={{ color: 'var(--ink-soft)' }}>Edit sections and questions here. Changes only affect audits started after you save — audits already in progress or completed keep the questions they were scored on.</p>
         <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
           <input type="text" placeholder="New template name" value={name} onChange={(e) => setName(e.target.value)} style={{ flex: 1 }} />

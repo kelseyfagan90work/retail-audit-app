@@ -31,7 +31,7 @@ function ConfirmInner() {
   if (!tokenHash) {
     return (
       <div className="card">
-        <h1>Link problem</h1>
+        <h1>Link Problem</h1>
         <p style={{ color: 'var(--rejected)' }}>This link is missing required information.</p>
         <a href="/login">Back to sign in</a>
       </div>
@@ -40,7 +40,7 @@ function ConfirmInner() {
 
   return (
     <div className="card">
-      <h1>{type === 'recovery' ? 'Reset your password' : "You're invited"}</h1>
+      <h1>{type === 'recovery' ? 'Reset Your Password' : "You're Invited"}</h1>
       <p style={{ color: 'var(--ink-soft)' }}>Click below to continue.</p>
       {error && (
         <div style={{ color: 'var(--rejected)', marginBottom: 12 }}>

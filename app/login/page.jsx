@@ -82,7 +82,7 @@ function RequestAccessForm({ onBack }) {
   if (sent) {
     return (
       <div className="card">
-        <h1>Request sent</h1>
+        <h1>Request Sent</h1>
         <p style={{ color: 'var(--ink-soft)' }}>An admin will review your request and send you an invite email once approved.</p>
         <button className="ghost" onClick={onBack}>Back to sign in</button>
       </div>
@@ -91,7 +91,7 @@ function RequestAccessForm({ onBack }) {
 
   return (
     <div className="card">
-      <h1>Request access</h1>
+      <h1>Request Access</h1>
       <p style={{ color: 'var(--ink-soft)', marginTop: 0 }}>Tell us who you are and an admin will send you an invite.</p>
       {error && <div style={{ color: 'var(--rejected)', marginBottom: 10 }}>{error}</div>}
       <form onSubmit={submit}>
@@ -134,7 +134,7 @@ function ForgotPasswordForm({ onBack }) {
   if (sent) {
     return (
       <div className="card">
-        <h1>Check your email</h1>
+        <h1>Check Your Email</h1>
         <p style={{ color: 'var(--ink-soft)' }}>If an account exists for {email}, a reset link is on its way.</p>
         <button className="ghost" onClick={onBack}>Back to sign in</button>
       </div>
@@ -143,7 +143,7 @@ function ForgotPasswordForm({ onBack }) {
 
   return (
     <div className="card">
-      <h1>Reset your password</h1>
+      <h1>Reset Your Password</h1>
       <p style={{ color: 'var(--ink-soft)', marginTop: 0 }}>We'll email you a link to choose a new one.</p>
       {error && <div style={{ color: 'var(--rejected)', marginBottom: 10 }}>{error}</div>}
       <form onSubmit={submit}>

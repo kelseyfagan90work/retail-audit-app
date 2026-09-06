@@ -91,7 +91,7 @@ function ArchiveContent({ user }) {
 
       {user.role === 'admin' && (
         <div className="card">
-          <h2>Send selected as report</h2>
+          <h2>Send Selected as Report</h2>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 8 }}>
             <span style={{ fontSize: 13, color: 'var(--ink-soft)' }}>{selected.size} selected</span>
             <input type="email" placeholder="Recipient email" value={recipient} onChange={(e) => setRecipient(e.target.value)} style={{ flex: 1, minWidth: 200 }} />

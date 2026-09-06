@@ -158,7 +158,7 @@ function ReportsContent() {
       <div className="card" style={{ padding: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 22px 0' }}>
           <div>
-            <h2>All scores</h2>
+            <h2>All Scores</h2>
             <p style={{ color: 'var(--ink-soft)', fontSize: 13, margin: 0 }}>One row per store, one column per audit type — export and paste straight into your scoring sheet. Ignores the audit-type filter above (shows every type). Best used with a single month selected.</p>
           </div>
           <button className="ghost small" disabled={!matrixData || matrixData.stores.length === 0} onClick={exportMatrix}>Export CSV</button>
@@ -193,7 +193,7 @@ function ReportsContent() {
 
       {templateChartRows.length > 0 && (
         <div className="card">
-          <h2>Score by audit type, over time</h2>
+          <h2>Score by Audit Type, Over Time</h2>
           <div style={{ height: 280, marginTop: 10 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={templateChartRows}>
@@ -245,7 +245,7 @@ function ReportsContent() {
       <div className="card" style={{ padding: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 22px 0' }}>
           <div>
-            <h2>Criteria misses</h2>
+            <h2>Criteria Misses</h2>
             <p style={{ color: 'var(--ink-soft)', fontSize: 13, margin: 0 }}>Same question failing across many stores usually means a training gap or an unrealistic standard — most-missed first.</p>
           </div>
           <button className="ghost small" disabled={!criteriaData || criteriaData.length === 0} onClick={exportCriteria}>Export CSV</button>
@@ -278,7 +278,7 @@ function ReportsContent() {
       {showAggregate && trendData && trendData.trend.length > 0 && (
         <>
           <div className="card" style={{ marginTop: 16 }}>
-            <h2>Overall average score by month</h2>
+            <h2>Overall Average Score by Month</h2>
             <div style={{ height: 240, marginTop: 10 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={trendData.trend}>
@@ -294,7 +294,7 @@ function ReportsContent() {
 
           {trendData.byDistrictManager.length > 1 && (
             <div className="card">
-              <h2>Average score by district manager</h2>
+              <h2>Average Score by District Manager</h2>
               <div style={{ height: Math.max(200, trendData.byDistrictManager.length * 36), marginTop: 10 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={trendData.byDistrictManager} layout="vertical" margin={{ left: 20 }}>
@@ -313,7 +313,7 @@ function ReportsContent() {
 
           {breakdownData && breakdownData.sections.length > 0 && (
             <div className="card">
-              <h2>Pass rate by audit category</h2>
+              <h2>Pass Rate by Audit Category</h2>
               <div style={{ height: Math.max(200, breakdownData.sections.length * 36), marginTop: 10 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={breakdownData.sections} layout="vertical" margin={{ left: 20 }}>

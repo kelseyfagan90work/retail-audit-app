@@ -43,7 +43,7 @@ function NewAuditContent() {
   return (
     <div className="card" style={{ maxWidth: 480 }}>
       <BackButton fallbackHref="/audits" />
-      <h1>Start a new audit</h1>
+      <h1>Start a New Audit</h1>
       {error && <div style={{ color: 'var(--rejected)', margin: '10px 0' }}>{error}</div>}
       <div style={{ margin: '16px 0' }}>
         <label style={{ fontSize: 13, color: 'var(--ink-soft)', display: 'block', marginBottom: 4 }}>Store</label>

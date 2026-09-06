@@ -38,14 +38,11 @@ function MissingAuditsSection({ storeId }) {
   }
 
   return (
-    <details className="card">
-      <summary style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', listStyle: 'none' }}>
-        <h2 style={{ display: 'inline', margin: 0 }}>
-          Audits needing completion{totalMissing !== null && ` (${totalMissing})`}
-        </h2>
-      </summary>
+    <div className="card">
+      <h2>Audits Due{totalMissing !== null && ` (${totalMissing})`}</h2>
+      <p style={{ color: 'var(--ink-soft)', fontSize: 13, margin: '2px 0 12px' }}>Select a store name to jump straight into its audit.</p>
 
-      <div style={{ marginTop: 12, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+      <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 13, color: 'var(--ink-soft)' }}>Month:</span>
         <MonthYearSelect value={month} onChange={setMonth} />
       </div>
@@ -61,14 +58,14 @@ function MissingAuditsSection({ storeId }) {
           <div style={{ marginTop: 8 }}>
             {t.stores.map((s) => (
               <div key={s.storeId} className="inline-edit-row" style={{ cursor: 'pointer' }} onClick={() => goToStore(t.templateId, s)}>
-                <div style={{ flex: 1, fontSize: 14 }}>{s.storeName}</div>
-                <span className="badge in_progress">{s.existingAuditId ? 'In progress' : 'Not started'}</span>
+                <div className="clickable-name" style={{ flex: 1, fontSize: 14 }}>{s.storeName}</div>
+                <span className="badge in_progress">{s.existingAuditId ? 'In Progress' : 'Not Started'}</span>
               </div>
             ))}
           </div>
         </details>
       ))}
-    </details>
+    </div>
   );
 }
 
@@ -122,7 +119,7 @@ function TasksPanel({ user, storeId, auditorEmail }) {
   return (
     <div className="card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>{user.role === 'admin' ? 'Tasks' : 'My tasks'}</h2>
+        <h2>{user.role === 'admin' ? 'Tasks' : 'My Tasks'}</h2>
         {user.role === 'admin' && <button className="ghost small" onClick={() => setShowForm((s) => !s)}>{showForm ? 'Cancel' : '+ Assign task'}</button>}
       </div>
 
@@ -225,7 +222,7 @@ function DashboardContent(user) {
 
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2>Stores below threshold</h2>
+          <h2>Stores Below Threshold</h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-soft)' }}>
             Below <input type="number" value={threshold} onChange={(e) => setThreshold(Number(e.target.value))} style={{ width: 60 }} />%
           </div>
@@ -252,7 +249,7 @@ function DashboardContent(user) {
       <MissingAuditsSection storeId={storeId} />
 
       <div className="card">
-        <h2>Outstanding audits</h2>
+        <h2>Outstanding Audits</h2>
         {data && data.outstandingAudits.length === 0 && <div className="empty-state">Nothing in progress right now.</div>}
         {data && data.outstandingAudits.length > 0 && (
           <table>

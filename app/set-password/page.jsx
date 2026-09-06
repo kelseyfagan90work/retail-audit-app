@@ -52,7 +52,7 @@ export default function SetPasswordPage() {
   return (
     <div className="auth-shell">
       <div className="card">
-        <h1>Set your password</h1>
+        <h1>Set Your Password</h1>
         <p style={{ color: 'var(--ink-soft)', marginTop: 0 }}>Choose a password to continue to RADAR.</p>
         {error && <div style={{ color: 'var(--rejected)', marginBottom: 10 }}>{error}</div>}
         <form onSubmit={submit}>

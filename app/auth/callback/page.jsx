@@ -37,7 +37,7 @@ export default function AuthCallbackPage() {
       <div className="card">
         {error ? (
           <>
-            <h1>Link problem</h1>
+            <h1>Link Problem</h1>
             <p style={{ color: 'var(--rejected)' }}>{error}</p>
             <a href="/login">Back to sign in</a>
           </>

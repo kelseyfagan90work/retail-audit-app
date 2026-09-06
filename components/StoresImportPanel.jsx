@@ -55,7 +55,7 @@ export default function StoresImportPanel({ onImported }) {
 
   return (
     <div className="card">
-      <h2>Import stores from CSV</h2>
+      <h2>Import Stores from CSV</h2>
       <p style={{ color: 'var(--ink-soft)', fontSize: 13 }}>
         Columns: Store Name, Region, District Manager, District Manager Email, Store Email (Region and the two emails are optional).
         Re-uploading later updates existing stores by Store Name instead of duplicating them.

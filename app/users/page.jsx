@@ -100,7 +100,7 @@ function UsersContent() {
     <div>
       {requests && requests.length > 0 && (
         <div className="card">
-          <h2>Access requests</h2>
+          <h2>Access Requests</h2>
           {requests.map((r) => (
             <div key={r.id} className="inline-edit-row">
               <div style={{ flex: 1 }}>

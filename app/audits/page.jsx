@@ -37,7 +37,7 @@ function AuditsContent() {
           <Link href="/audits/new"><button className="primary">Start new audit</button></Link>
         </div>
         <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
-          <button className={status === 'in_progress' ? 'primary' : 'ghost'} onClick={() => setStatus('in_progress')}>In progress</button>
+          <button className={status === 'in_progress' ? 'primary' : 'ghost'} onClick={() => setStatus('in_progress')}>In Progress</button>
           <button className={status === 'completed' ? 'primary' : 'ghost'} onClick={() => setStatus('completed')}>Completed</button>
         </div>
         <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', marginTop: 14 }}>
@@ -66,7 +66,7 @@ function AuditsContent() {
                     {a.template_name} · {new Date(a.started_at).toLocaleDateString()}
                   </div>
                 </div>
-                {a.status === 'completed' ? <ScoreRing score={a.overall_score} size={48} /> : <span className="badge in_progress">In progress</span>}
+                {a.status === 'completed' ? <ScoreRing score={a.overall_score} size={48} /> : <span className="badge in_progress">In Progress</span>}
               </div>
             </Link>
           ))}
