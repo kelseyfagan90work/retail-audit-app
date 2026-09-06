@@ -75,6 +75,25 @@ code { background: var(--card-raised); padding: 1px 6px; border-radius: 4px; fon
 .top-nav .links a.active { color: var(--ink); background: var(--card-raised); border-color: var(--line); }
 .top-nav .who { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--ink-soft); flex-shrink: 0; }
 
+.nav-dropdown { position: relative; }
+.nav-dropdown-trigger {
+  color: var(--ink-soft); font-size: 13px; font-weight: 600; font-family: 'Archivo', inherit;
+  padding: 7px 14px; border-radius: 999px; border: 1px solid transparent; background: transparent; cursor: pointer;
+}
+.nav-dropdown-trigger:hover { color: var(--ink); border-color: var(--line); }
+.nav-dropdown-trigger.active { color: var(--ink); background: var(--card-raised); border-color: var(--line); }
+.nav-dropdown-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 20;
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 6px; min-width: 150px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  display: flex; flex-direction: column;
+}
+.nav-dropdown-menu a {
+  color: var(--ink); text-decoration: none; font-size: 13px; font-weight: 600;
+  padding: 9px 12px; border-radius: 8px;
+}
+.nav-dropdown-menu a:hover { background: var(--card-raised); }
+
 .card {
   background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 20px 22px; margin-bottom: 16px;
@@ -110,6 +129,7 @@ input[type="date"], input[type="text"], input[type="email"], input[type="passwor
   font-family: 'Archivo', inherit; font-size: 14px; padding: 9px 11px; color: var(--ink);
   border: 1px solid var(--line); border-radius: 9px; background: var(--card-raised);
 }
+input[type="date"] { color-scheme: dark; } /* fixes the browser rendering the date text/icon dark-on-dark */
 input::placeholder, textarea::placeholder { color: var(--ink-faint); }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
 textarea { width: 100%; resize: vertical; min-height: 50px; }
@@ -206,6 +226,10 @@ tbody tr:hover td { background: rgba(255, 255, 255, 0.02); }
   /* Every multi-column layout collapses to one column — no more squeezed
      150px-wide dropdowns and inputs on a 375px screen. */
   .grid:not(.grid-photos), .grid-2 { grid-template-columns: 1fr !important; }
+
+  .dashboard-header { flex-direction: column; align-items: stretch !important; }
+  .dashboard-filters { flex-direction: column; width: 100%; }
+  .dashboard-filters select { width: 100%; }
 
   /* Question rows stack instead of squeezing the toggle onto a narrow line */
   .audit-question-row { flex-direction: column; align-items: stretch; gap: 10px; }

@@ -141,9 +141,9 @@ function DashboardContent(user) {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <h1 style={{ margin: 0 }}>RAD Dashboard</h1>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="dashboard-filters" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <select value={storeId} onChange={(e) => setStoreId(e.target.value)}>
             <option value="">All stores</option>
             {[...stores].sort((a, b) => a.store_name.localeCompare(b.store_name)).map((s) => <option key={s.id} value={s.id}>{s.store_name}</option>)}
