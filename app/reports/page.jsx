@@ -17,13 +17,12 @@ function cleanParams(obj) {
 }
 
 // ---------- All Scores ----------
-function AllScoresSection({ refData }) {
-  const [filters, setFilters] = useState({});
+function AllScoresSection({ globalFilters }) {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    api.getMatrixReport(cleanParams(filters)).then(setData);
-  }, [filters]);
+    api.getMatrixReport(cleanParams(globalFilters)).then(setData);
+  }, [globalFilters]);
 
   function exportMatrix() {
     downloadCsv('all-scores.csv', data.stores.map((s) => {
@@ -35,20 +34,17 @@ function AllScoresSection({ refData }) {
 
   return (
     <div className="card" style={{ padding: 0 }}>
-      <div style={{ padding: '18px 22px 0' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h2>All Scores</h2>
-            <p style={{ color: 'var(--ink-soft)', fontSize: 13, margin: 0 }}>One row per store, one column per audit type — export and paste straight into your scoring sheet. Best used with a single month selected.</p>
-          </div>
-          <button className="ghost small" disabled={!data || data.stores.length === 0} onClick={exportMatrix}>Export CSV</button>
+      <div style={{ padding: '18px 22px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2>All Scores</h2>
+          <p style={{ color: 'var(--ink-soft)', fontSize: 13, margin: 0 }}>One row per store, one column per audit type — export and paste straight into your scoring sheet.</p>
         </div>
-        <ReportFilterBar {...refData} filters={filters} onChange={setFilters} fields={['region', 'districtManager', 'storeId', 'month']} />
+        <button className="ghost small" disabled={!data || data.stores.length === 0} onClick={exportMatrix}>Export CSV</button>
       </div>
-      {!data && <div style={{ padding: '0 22px 20px', color: 'var(--ink-soft)' }}>Loading...</div>}
+      {!data && <div style={{ padding: '20px 22px', color: 'var(--ink-soft)' }}>Loading...</div>}
       {data && data.stores.length === 0 && <div className="empty-state">No completed audits match these filters yet.</div>}
       {data && data.stores.length > 0 && (
-        <div style={{ overflowX: 'auto' }}>
+        <div style={{ overflowX: 'auto', marginTop: 10 }}>
           <table>
             <thead>
               <tr><th>Store</th><th>Region</th><th>DM</th>{data.templates.map((t) => <th key={t}>{t}</th>)}</tr>
@@ -71,13 +67,12 @@ function AllScoresSection({ refData }) {
 }
 
 // ---------- Score by audit type, over time ----------
-function TemplateTrendSection({ refData }) {
-  const [filters, setFilters] = useState({});
+function TemplateTrendSection({ globalFilters }) {
   const [trendData, setTrendData] = useState(null);
 
   useEffect(() => {
-    api.getTrendReport(cleanParams(filters)).then(setTrendData);
-  }, [filters]);
+    api.getTrendReport(cleanParams(globalFilters)).then(setTrendData);
+  }, [globalFilters]);
 
   const templateNames = trendData ? [...new Set(trendData.templateTrend.map((t) => t.template))].sort() : [];
   const rows = (() => {
@@ -90,10 +85,9 @@ function TemplateTrendSection({ refData }) {
   return (
     <div className="card">
       <h2>Score by Audit Type, Over Time</h2>
-      <ReportFilterBar {...refData} filters={filters} onChange={setFilters} fields={['region', 'districtManager', 'storeId', 'auditorEmail', 'month']} />
       {rows.length === 0 && <div className="empty-state">No completed audits match these filters yet.</div>}
       {rows.length > 0 && (
-        <div style={{ height: 280 }}>
+        <div style={{ height: 280, marginTop: 10 }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={rows}>
               <CartesianGrid stroke="#2a2f3a" />
@@ -113,18 +107,19 @@ function TemplateTrendSection({ refData }) {
 }
 
 // ---------- Criteria misses ----------
-function CriteriaMissesSection({ refData }) {
-  const [filters, setFilters] = useState({});
+function CriteriaMissesSection({ globalFilters, refData }) {
+  const [localFilters, setLocalFilters] = useState({});
   const [all, setAll] = useState(null);
 
-  useEffect(() => {
-    const { threshold, ...apiFilters } = filters;
-    api.getCriteriaReport(cleanParams(apiFilters)).then((r) => setAll(r.criteria));
-    // eslint-disable-next-line
-  }, [filters.region, filters.districtManager, filters.storeId, filters.templateId, filters.auditorEmail, filters.month]);
+  const combined = { ...globalFilters, templateId: localFilters.templateId };
 
-  const hasOtherFilters = ['region', 'districtManager', 'storeId', 'templateId', 'auditorEmail', 'month'].some((k) => filters[k]);
-  const threshold = filters.threshold ? Number(filters.threshold) : null;
+  useEffect(() => {
+    api.getCriteriaReport(cleanParams(combined)).then((r) => setAll(r.criteria));
+    // eslint-disable-next-line
+  }, [globalFilters, localFilters.templateId]);
+
+  const hasOtherFilters = Object.values(globalFilters).some((v) => v) || localFilters.templateId;
+  const threshold = localFilters.threshold ? Number(localFilters.threshold) : null;
 
   let shown = all || [];
   let mode = 'top5';
@@ -159,7 +154,7 @@ function CriteriaMissesSection({ refData }) {
           </div>
           <button className="ghost small" disabled={shown.length === 0} onClick={exportCriteria}>Export CSV</button>
         </div>
-        <ReportFilterBar {...refData} filters={filters} onChange={setFilters} fields={['region', 'districtManager', 'storeId', 'templateId', 'auditorEmail', 'month', 'threshold']} />
+        <ReportFilterBar {...refData} filters={localFilters} onChange={setLocalFilters} fields={['templateId', 'threshold']} />
       </div>
       {!all && <div style={{ padding: '0 22px 20px', color: 'var(--ink-soft)' }}>Loading...</div>}
       {all && shown.length === 0 && <div className="empty-state">No answered questions match these filters yet.</div>}
@@ -186,23 +181,18 @@ function CriteriaMissesSection({ refData }) {
   );
 }
 
-// ---------- Aggregate charts (always visible) ----------
-function AggregateSection({ refData }) {
-  const [filters, setFilters] = useState({});
+// ---------- Aggregate charts ----------
+function AggregateSection({ globalFilters }) {
   const [trendData, setTrendData] = useState(null);
   const [breakdownData, setBreakdownData] = useState(null);
 
   useEffect(() => {
-    api.getTrendReport(cleanParams(filters)).then(setTrendData);
-    api.getBreakdownReport(cleanParams(filters)).then(setBreakdownData);
-  }, [filters]);
+    api.getTrendReport(cleanParams(globalFilters)).then(setTrendData);
+    api.getBreakdownReport(cleanParams(globalFilters)).then(setBreakdownData);
+  }, [globalFilters]);
 
   return (
     <div>
-      <div className="card">
-        <ReportFilterBar {...refData} filters={filters} onChange={setFilters} fields={['region', 'districtManager', 'storeId', 'templateId', 'auditorEmail', 'month']} />
-      </div>
-
       {trendData && trendData.trend.length > 0 && (
         <div className="card">
           <h2>Overall Average Score by Month</h2>
@@ -267,6 +257,7 @@ function ReportsContent() {
   const [stores, setStores] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [users, setUsers] = useState([]);
+  const [filters, setFilters] = useState({});
 
   useEffect(() => {
     api.getStores().then(setStores);
@@ -280,13 +271,13 @@ function ReportsContent() {
     <div>
       <div className="card">
         <h1>Reports</h1>
-        <p style={{ color: 'var(--ink-soft)', margin: 0 }}>Each section below filters independently.</p>
+        <ReportFilterBar {...refData} filters={filters} onChange={setFilters} fields={['districtManager', 'storeId', 'auditorEmail', 'month']} />
       </div>
 
-      <AllScoresSection refData={refData} />
-      <TemplateTrendSection refData={refData} />
-      <CriteriaMissesSection refData={refData} />
-      <AggregateSection refData={refData} />
+      <AllScoresSection globalFilters={filters} />
+      <TemplateTrendSection globalFilters={filters} />
+      <CriteriaMissesSection globalFilters={filters} refData={refData} />
+      <AggregateSection globalFilters={filters} />
     </div>
   );
 }

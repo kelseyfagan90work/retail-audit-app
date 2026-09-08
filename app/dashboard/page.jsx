@@ -184,6 +184,7 @@ function TasksPanel({ user, storeId, auditorEmail }) {
 
 function DashboardContent(user) {
   const [threshold, setThreshold] = useState(80);
+  const [thresholdMonth, setThresholdMonth] = useState(new Date().toISOString().slice(0, 7));
   const [stores, setStores] = useState([]);
   const [users, setUsers] = useState([]);
   const [storeId, setStoreId] = useState('');
@@ -196,11 +197,11 @@ function DashboardContent(user) {
   }, []);
 
   useEffect(() => {
-    const params = { threshold };
+    const params = { threshold, month: thresholdMonth };
     if (storeId) params.storeId = storeId;
     if (auditorEmail) params.auditorEmail = auditorEmail;
     api.getDashboardSummary(params).then(setData);
-  }, [threshold, storeId, auditorEmail]);
+  }, [threshold, thresholdMonth, storeId, auditorEmail]);
 
   return (
     <div>
@@ -221,21 +222,25 @@ function DashboardContent(user) {
       <TasksPanel user={user} storeId={storeId} auditorEmail={auditorEmail} />
 
       <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2>Stores Below Threshold</h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-soft)' }}>
-            Below <input type="number" value={threshold} onChange={(e) => setThreshold(Number(e.target.value))} style={{ width: 60 }} />%
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+          <h2>Scores Below Threshold</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <MonthYearSelect value={thresholdMonth} onChange={setThresholdMonth} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-soft)' }}>
+              Below <input type="number" value={threshold} onChange={(e) => setThreshold(Number(e.target.value))} style={{ width: 60 }} />%
+            </div>
           </div>
         </div>
         {!data && <div style={{ color: 'var(--ink-soft)' }}>Loading...</div>}
-        {data && data.belowThreshold.length === 0 && <div className="empty-state">No stores below this threshold. Nice.</div>}
+        {data && data.belowThreshold.length === 0 && <div className="empty-state">No scores below this threshold for this month. Nice.</div>}
         {data && data.belowThreshold.length > 0 && (
           <table>
-            <thead><tr><th>Store</th><th>Auditor</th><th>Score</th><th>Audited</th></tr></thead>
+            <thead><tr><th>Store</th><th>Audit Type</th><th>Auditor</th><th>Score</th><th>Audited</th></tr></thead>
             <tbody>
               {data.belowThreshold.map((s) => (
-                <tr key={s.storeId}>
+                <tr key={`${s.storeId}-${s.auditId}`}>
                   <td>{s.storeName}</td>
+                  <td>{s.templateName}</td>
                   <td>{s.auditorName}</td>
                   <td><ScoreRing score={s.score} size={40} /></td>
                   <td><Link href={`/audits/${s.auditId}`}>{new Date(s.completedAt).toLocaleDateString()}</Link></td>

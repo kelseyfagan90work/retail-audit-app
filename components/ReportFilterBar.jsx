@@ -4,14 +4,12 @@ import MonthYearSelect from './MonthYearSelect';
 
 export default function ReportFilterBar({ stores, templates, users, filters, onChange, fields }) {
   const show = (f) => fields.includes(f);
-  const regions = [...new Set(stores.map((s) => s.region).filter(Boolean))].sort();
-  const districtManagers = [...new Set(stores.filter((s) => !filters.region || s.region === filters.region).map((s) => s.district_manager))].sort();
-  const filteredStores = [...stores.filter((s) => (!filters.region || s.region === filters.region) && (!filters.districtManager || s.district_manager === filters.districtManager))]
+  const districtManagers = [...new Set(stores.map((s) => s.district_manager))].sort();
+  const filteredStores = [...stores.filter((s) => !filters.districtManager || s.district_manager === filters.districtManager)]
     .sort((a, b) => a.store_name.localeCompare(b.store_name));
 
   function set(key, value) {
     const next = { ...filters, [key]: value };
-    if (key === 'region') { next.districtManager = ''; next.storeId = ''; }
     if (key === 'districtManager') next.storeId = '';
     onChange(next);
   }
@@ -32,16 +30,10 @@ export default function ReportFilterBar({ stores, templates, users, filters, onC
   const hasAnyFilter = Object.values(filters).some((v) => v);
 
   return (
-    <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', marginBottom: 14 }}>
-      {show('region') && (
-        <select value={filters.region || ''} onChange={(e) => set('region', e.target.value)}>
-          <option value="">All regions</option>
-          {regions.map((r) => <option key={r} value={r}>{r}</option>)}
-        </select>
-      )}
+    <div className="filter-bar">
       {show('districtManager') && (
         <select value={filters.districtManager || ''} onChange={(e) => set('districtManager', e.target.value)}>
-          <option value="">All district managers</option>
+          <option value="">All DMs</option>
           {districtManagers.map((d) => <option key={d} value={d}>{d}</option>)}
         </select>
       )}
@@ -63,17 +55,13 @@ export default function ReportFilterBar({ stores, templates, users, filters, onC
           {users.map((u) => <option key={u.id} value={u.email}>{u.display_name}</option>)}
         </select>
       )}
-      {show('month') && (
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          <MonthYearSelect value={filters.month || ''} onChange={setMonth} />
-        </div>
-      )}
+      {show('month') && <MonthYearSelect value={filters.month || ''} onChange={setMonth} compact />}
       {show('threshold') && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-soft)' }}>
-          Fail rate ≥ <input type="number" min="0" max="100" value={filters.threshold || ''} onChange={(e) => set('threshold', e.target.value)} style={{ width: 60 }} />%
+        <div className="filter-inline-note">
+          Fail rate ≥ <input type="number" min="0" max="100" value={filters.threshold || ''} onChange={(e) => set('threshold', e.target.value)} style={{ width: 52 }} />%
         </div>
       )}
-      {hasAnyFilter && <button className="ghost small" onClick={() => onChange({})}>Clear all</button>}
+      {hasAnyFilter && <button className="ghost small" onClick={() => onChange({})}>Clear</button>}
     </div>
   );
 }
