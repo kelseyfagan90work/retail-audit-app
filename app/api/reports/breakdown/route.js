@@ -18,7 +18,7 @@ export async function GET(request) {
   const admin = createAdminClient();
   let auditQuery = admin
     .from('audits')
-    .select('id, stores!inner(region, district_manager)')
+    .select('id, template_name, stores!inner(region, district_manager)')
     .eq('status', 'completed');
 
   if (region) auditQuery = auditQuery.eq('stores.region', region);
@@ -31,34 +31,37 @@ export async function GET(request) {
   if (auditsError) return NextResponse.json({ error: auditsError.message }, { status: 500 });
 
   const auditIds = audits.map((a) => a.id);
-  if (auditIds.length === 0) return NextResponse.json({ sections: [] });
+  if (auditIds.length === 0) return NextResponse.json({ audits: [] });
 
-  const { data: sections } = await admin.from('audit_sections').select('id, name, audit_id').in('audit_id', auditIds);
+  const templateNameByAuditId = {};
+  audits.forEach((a) => { templateNameByAuditId[a.id] = a.template_name; });
+
+  const { data: sections } = await admin.from('audit_sections').select('id, audit_id').in('audit_id', auditIds);
   const sectionIds = (sections || []).map((s) => s.id);
   const { data: questions } = await admin
     .from('audit_questions')
     .select('answer, audit_section_id')
     .in('audit_section_id', sectionIds.length ? sectionIds : [-1]);
 
-  const sectionNameById = {};
-  (sections || []).forEach((s) => { sectionNameById[s.id] = s.name; });
+  const auditIdBySectionId = {};
+  (sections || []).forEach((s) => { auditIdBySectionId[s.id] = s.audit_id; });
 
-  // Group by section NAME (not id — each audit has its own snapshot copy of
-  // the section, so "Front of Store" from one audit and another are
-  // different rows but the same conceptual category).
-  const byName = {};
+  // Group by audit type (template name) — every question across every
+  // section of that audit type rolls up into one overall pass rate.
+  const byTemplate = {};
   (questions || []).forEach((q) => {
     if (q.answer !== 'yes' && q.answer !== 'no') return; // exclude N/A and unanswered, same as overall scoring
-    const name = sectionNameById[q.audit_section_id];
-    if (!name) return;
-    (byName[name] ||= { yes: 0, total: 0 });
-    byName[name].total += 1;
-    if (q.answer === 'yes') byName[name].yes += 1;
+    const auditId = auditIdBySectionId[q.audit_section_id];
+    const templateName = templateNameByAuditId[auditId];
+    if (!templateName) return;
+    (byTemplate[templateName] ||= { yes: 0, total: 0 });
+    byTemplate[templateName].total += 1;
+    if (q.answer === 'yes') byTemplate[templateName].yes += 1;
   });
 
-  const result = Object.entries(byName)
-    .map(([name, { yes, total }]) => ({ section: name, passRate: Math.round((yes / total) * 1000) / 10, sampleSize: total }))
+  const result = Object.entries(byTemplate)
+    .map(([name, { yes, total }]) => ({ audit: name, passRate: Math.round((yes / total) * 1000) / 10, sampleSize: total }))
     .sort((a, b) => a.passRate - b.passRate); // weakest first
 
-  return NextResponse.json({ sections: result });
+  return NextResponse.json({ audits: result });
 }

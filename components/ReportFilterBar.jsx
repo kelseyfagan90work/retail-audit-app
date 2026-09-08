@@ -1,5 +1,7 @@
 'use client';
 
+import MonthYearSelect from './MonthYearSelect';
+
 export default function ReportFilterBar({ stores, templates, users, filters, onChange, fields }) {
   const show = (f) => fields.includes(f);
   const regions = [...new Set(stores.map((s) => s.region).filter(Boolean))].sort();
@@ -11,6 +13,19 @@ export default function ReportFilterBar({ stores, templates, users, filters, onC
     const next = { ...filters, [key]: value };
     if (key === 'region') { next.districtManager = ''; next.storeId = ''; }
     if (key === 'districtManager') next.storeId = '';
+    onChange(next);
+  }
+
+  function setMonth(month) {
+    const next = { ...filters, month };
+    if (month) {
+      const [y, m] = month.split('-').map(Number);
+      next.dateFrom = `${month}-01`;
+      next.dateTo = `${month}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`;
+    } else {
+      delete next.dateFrom;
+      delete next.dateTo;
+    }
     onChange(next);
   }
 
@@ -48,14 +63,17 @@ export default function ReportFilterBar({ stores, templates, users, filters, onC
           {users.map((u) => <option key={u.id} value={u.email}>{u.display_name}</option>)}
         </select>
       )}
-      {show('dateFrom') && <input type="date" value={filters.dateFrom || ''} onChange={(e) => set('dateFrom', e.target.value)} />}
-      {show('dateTo') && <input type="date" value={filters.dateTo || ''} onChange={(e) => set('dateTo', e.target.value)} />}
+      {show('month') && (
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <MonthYearSelect value={filters.month || ''} onChange={setMonth} />
+        </div>
+      )}
       {show('threshold') && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-soft)' }}>
           Fail rate ≥ <input type="number" min="0" max="100" value={filters.threshold || ''} onChange={(e) => set('threshold', e.target.value)} style={{ width: 60 }} />%
         </div>
       )}
-      {hasAnyFilter && <button className="ghost small" onClick={() => onChange({})}>Clear</button>}
+      {hasAnyFilter && <button className="ghost small" onClick={() => onChange({})}>Clear all</button>}
     </div>
   );
 }
