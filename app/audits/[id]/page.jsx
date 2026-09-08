@@ -11,14 +11,13 @@ import AnswerToggle from '@/components/AnswerToggle';
 import ScoreRing from '@/components/ScoreRing';
 import MonthYearSelect from '@/components/MonthYearSelect';
 
-function QuestionRow({ question, auditId, readOnly, onChanged }) {
+function QuestionRow({ question, auditId, readOnly, onAnswerChange, onPhotoAdded }) {
   const [note, setNote] = useState(question.note || '');
   const [uploading, setUploading] = useState(false);
   const fileInput = useRef(null);
 
-  async function setAnswer(answer) {
-    await api.updateAuditQuestion(auditId, question.id, { answer });
-    onChanged();
+  function setAnswer(answer) {
+    onAnswerChange(question.id, answer);
   }
 
   async function saveNote() {
@@ -31,10 +30,10 @@ function QuestionRow({ question, auditId, readOnly, onChanged }) {
     try {
       for (const file of Array.from(fileList)) {
         const compressed = await compressImage(file);
-        const { storagePath, token } = await api.getPhotoUploadUrl(auditId, question.id, compressed.name);
+        const { photoId, storagePath, token, url } = await api.getPhotoUploadUrl(auditId, question.id, compressed.name);
         await uploadToStorage(storagePath, token, compressed);
+        onPhotoAdded(question.id, { id: photoId, url });
       }
-      onChanged();
     } finally {
       setUploading(false);
     }
@@ -154,6 +153,39 @@ function AuditContent({ auditId, user }) {
     api.getStoreHistory(data.store_id, auditId).then(setHistory);
   }
   useEffect(() => { refresh(); api.getUsers().then(setUsers); /* eslint-disable-next-line */ }, [auditId]);
+
+  // These two update the on-screen state immediately (no waiting on a
+  // round-trip) and save in the background — refetching the whole audit
+  // (sections, questions, every photo URL) on every single button click was
+  // the actual cause of the sluggish feel.
+  function updateQuestionLocal(questionId, updates) {
+    setAudit((prev) => prev && ({
+      ...prev,
+      sections: prev.sections.map((s) => ({
+        ...s,
+        questions: s.questions.map((q) => (q.id === questionId ? { ...q, ...updates } : q)),
+      })),
+    }));
+  }
+
+  async function handleAnswerChange(questionId, answer) {
+    updateQuestionLocal(questionId, { answer });
+    try {
+      await api.updateAuditQuestion(auditId, questionId, { answer });
+    } catch (e) {
+      setError(`Could not save that answer: ${e.message}`);
+    }
+  }
+
+  function handlePhotoAdded(questionId, photo) {
+    setAudit((prev) => prev && ({
+      ...prev,
+      sections: prev.sections.map((s) => ({
+        ...s,
+        questions: s.questions.map((q) => (q.id === questionId ? { ...q, photos: [...(q.photos || []), photo] } : q)),
+      })),
+    }));
+  }
 
   if (!audit) return <div className="card">Loading...</div>;
 
@@ -347,7 +379,7 @@ function AuditContent({ auditId, user }) {
             <SectionTaskButton section={section} audit={audit} users={users} />
           </div>
           {section.questions.map((q) => (
-            <QuestionRow key={q.id} question={q} auditId={auditId} readOnly={readOnly} onChanged={refresh} />
+            <QuestionRow key={q.id} question={q} auditId={auditId} readOnly={readOnly} onAnswerChange={handleAnswerChange} onPhotoAdded={handlePhotoAdded} />
           ))}
         </div>
       ))}

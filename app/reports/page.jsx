@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import AppFrame from '@/components/AppFrame';
+import ReportFilterBar from '@/components/ReportFilterBar';
 import { api } from '@/lib/api';
 import { downloadCsv } from '@/lib/csv';
 import ScoreRing from '@/components/ScoreRing';
@@ -16,283 +17,278 @@ function cleanParams(obj) {
   Object.entries(obj).forEach(([k, v]) => { if (v) out[k] = v; });
   return out;
 }
-
 function announcedLabel(v) {
   if (v === true) return 'Announced';
   if (v === false) return 'Unannounced';
   return '—';
 }
 
-function ReportsContent() {
-  const [stores, setStores] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [templates, setTemplates] = useState([]);
-  const [region, setRegion] = useState('');
-  const [districtManager, setDistrictManager] = useState('');
-  const [storeId, setStoreId] = useState('');
-  const [templateId, setTemplateId] = useState('');
-  const [auditorEmail, setAuditorEmail] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [auditsData, setAuditsData] = useState(null);
-  const [criteriaData, setCriteriaData] = useState(null);
-  const [matrixData, setMatrixData] = useState(null);
-  const [showAggregate, setShowAggregate] = useState(false);
-  const [trendData, setTrendData] = useState(null);
-  const [breakdownData, setBreakdownData] = useState(null);
+// ---------- All Scores ----------
+function AllScoresSection({ refData }) {
+  const [filters, setFilters] = useState({});
+  const [data, setData] = useState(null);
 
   useEffect(() => {
-    api.getStores().then(setStores);
-    api.getUsers().then(setUsers);
-    api.getTemplates().then(setTemplates);
-  }, []);
-
-  const filters = useMemo(
-    () => cleanParams({ region, districtManager, storeId, templateId, auditorEmail, dateFrom, dateTo }),
-    [region, districtManager, storeId, templateId, auditorEmail, dateFrom, dateTo]
-  );
-  const matrixFilters = useMemo(
-    () => cleanParams({ region, districtManager, storeId, dateFrom, dateTo }),
-    [region, districtManager, storeId, dateFrom, dateTo]
-  );
-
-  useEffect(() => {
-    api.getAuditsReport(filters).then((r) => setAuditsData(r.audits));
-    api.getCriteriaReport(filters).then((r) => setCriteriaData(r.criteria));
-    api.getTrendReport(filters).then(setTrendData);
+    api.getMatrixReport(cleanParams(filters)).then(setData);
   }, [filters]);
 
-  useEffect(() => {
-    api.getMatrixReport(matrixFilters).then(setMatrixData);
-  }, [matrixFilters]);
-
-  useEffect(() => {
-    if (!showAggregate) return;
-    api.getBreakdownReport(filters).then(setBreakdownData);
-  }, [filters, showAggregate]);
-
-  const regions = [...new Set(stores.map((s) => s.region).filter(Boolean))].sort();
-  const districtManagers = [...new Set(stores.filter((s) => !region || s.region === region).map((s) => s.district_manager))].sort();
-  const filteredStores = [...stores.filter((s) => (!region || s.region === region) && (!districtManager || s.district_manager === districtManager))].sort((a, b) => a.store_name.localeCompare(b.store_name));
-
-  function resetFilters() {
-    setRegion(''); setDistrictManager(''); setStoreId(''); setTemplateId(''); setAuditorEmail(''); setDateFrom(''); setDateTo('');
-  }
-
-  function exportAudits() {
-    downloadCsv('audit-report.csv', auditsData.map((a) => ({
-      Store: a.storeName,
-      Region: a.region || '',
-      'District Manager': a.districtManager,
-      Auditor: a.auditorName,
-      Template: a.templateName,
-      'Audit Month': a.auditPeriod ? a.auditPeriod.slice(0, 7) : '',
-      Started: new Date(a.startedAt).toLocaleString(),
-      Completed: new Date(a.completedAt).toLocaleString(),
-      Announced: announcedLabel(a.announced),
-      'Manager On Shift': a.managerOnShift || '',
-      'Score (%)': a.score,
-      Notes: a.overallNote || '',
-    })));
-  }
-
-  function exportCriteria() {
-    downloadCsv('criteria-misses.csv', criteriaData.map((c) => ({
-      Section: c.section,
-      Question: c.question,
-      Fails: c.fails,
-      'Total Answered': c.total,
-      'Fail Rate (%)': c.failRate,
-    })));
-  }
-
   function exportMatrix() {
-    downloadCsv('all-scores.csv', matrixData.stores.map((s) => {
+    downloadCsv('all-scores.csv', data.stores.map((s) => {
       const row = { Region: s.region || '', 'District Manager': s.districtManager, Store: s.storeName };
-      matrixData.templates.forEach((t) => { row[t] = s.scores[t] != null ? s.scores[t] : ''; });
+      data.templates.forEach((t) => { row[t] = s.scores[t] != null ? s.scores[t] : ''; });
       return row;
     }));
   }
 
+  return (
+    <div className="card" style={{ padding: 0 }}>
+      <div style={{ padding: '18px 22px 0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h2>All Scores</h2>
+            <p style={{ color: 'var(--ink-soft)', fontSize: 13, margin: 0 }}>One row per store, one column per audit type — export and paste straight into your scoring sheet. Best used with a single month selected.</p>
+          </div>
+          <button className="ghost small" disabled={!data || data.stores.length === 0} onClick={exportMatrix}>Export CSV</button>
+        </div>
+        <ReportFilterBar {...refData} filters={filters} onChange={setFilters} fields={['region', 'districtManager', 'storeId', 'dateFrom', 'dateTo']} />
+      </div>
+      {!data && <div style={{ padding: '0 22px 20px', color: 'var(--ink-soft)' }}>Loading...</div>}
+      {data && data.stores.length === 0 && <div className="empty-state">No completed audits match these filters yet.</div>}
+      {data && data.stores.length > 0 && (
+        <div style={{ overflowX: 'auto' }}>
+          <table>
+            <thead>
+              <tr><th>Store</th><th>Region</th><th>DM</th>{data.templates.map((t) => <th key={t}>{t}</th>)}</tr>
+            </thead>
+            <tbody>
+              {data.stores.map((s) => (
+                <tr key={s.storeName}>
+                  <td>{s.storeName}</td>
+                  <td>{s.region || '—'}</td>
+                  <td>{s.districtManager}</td>
+                  {data.templates.map((t) => <td key={t}>{s.scores[t] != null ? `${Math.round(s.scores[t] * 100)}%` : '—'}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------- Score by audit type, over time ----------
+function TemplateTrendSection({ refData }) {
+  const [filters, setFilters] = useState({});
+  const [trendData, setTrendData] = useState(null);
+
+  useEffect(() => {
+    api.getTrendReport(cleanParams(filters)).then(setTrendData);
+  }, [filters]);
+
   const templateNames = trendData ? [...new Set(trendData.templateTrend.map((t) => t.template))].sort() : [];
-  const templateChartRows = (() => {
+  const rows = (() => {
     if (!trendData) return [];
     const byMonth = {};
-    trendData.templateTrend.forEach((t) => {
-      (byMonth[t.month] ||= { month: t.month })[t.template] = t.averageScore;
-    });
+    trendData.templateTrend.forEach((t) => { (byMonth[t.month] ||= { month: t.month })[t.template] = t.averageScore; });
     return Object.values(byMonth).sort((a, b) => a.month.localeCompare(b.month));
   })();
 
   return (
-    <div>
-      <div className="card">
-        <h1>Reports</h1>
-        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', marginTop: 12 }}>
-          <select value={region} onChange={(e) => { setRegion(e.target.value); setDistrictManager(''); setStoreId(''); }}>
-            <option value="">All regions</option>
-            {regions.map((r) => <option key={r} value={r}>{r}</option>)}
-          </select>
-          <select value={districtManager} onChange={(e) => { setDistrictManager(e.target.value); setStoreId(''); }}>
-            <option value="">All district managers</option>
-            {districtManagers.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
-          <select value={storeId} onChange={(e) => setStoreId(e.target.value)}>
-            <option value="">All stores</option>
-            {filteredStores.map((s) => <option key={s.id} value={s.id}>{s.store_name}</option>)}
-          </select>
-          <select value={templateId} onChange={(e) => setTemplateId(e.target.value)}>
-            <option value="">All audit types</option>
-            {templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-          </select>
-          <select value={auditorEmail} onChange={(e) => setAuditorEmail(e.target.value)}>
-            <option value="">All auditors</option>
-            {users.map((u) => <option key={u.id} value={u.email}>{u.display_name}</option>)}
-          </select>
-          <input type="date" placeholder="From" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
-          <input type="date" placeholder="To" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
-          <button className="ghost" onClick={resetFilters}>Clear filters</button>
-        </div>
-      </div>
-
-      <div className="card" style={{ padding: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 22px 0' }}>
-          <div>
-            <h2>All Scores</h2>
-            <p style={{ color: 'var(--ink-soft)', fontSize: 13, margin: 0 }}>One row per store, one column per audit type — export and paste straight into your scoring sheet. Ignores the audit-type filter above (shows every type). Best used with a single month selected.</p>
-          </div>
-          <button className="ghost small" disabled={!matrixData || matrixData.stores.length === 0} onClick={exportMatrix}>Export CSV</button>
-        </div>
-        {!matrixData && <div style={{ padding: 20, color: 'var(--ink-soft)' }}>Loading...</div>}
-        {matrixData && matrixData.stores.length === 0 && <div className="empty-state">No completed audits match these filters yet.</div>}
-        {matrixData && matrixData.stores.length > 0 && (
-          <div style={{ overflowX: 'auto', marginTop: 10 }}>
-            <table>
-              <thead>
-                <tr>
-                  <th>Store</th><th>Region</th><th>DM</th>
-                  {matrixData.templates.map((t) => <th key={t}>{t}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {matrixData.stores.map((s) => (
-                  <tr key={s.storeName}>
-                    <td>{s.storeName}</td>
-                    <td>{s.region || '—'}</td>
-                    <td>{s.districtManager}</td>
-                    {matrixData.templates.map((t) => (
-                      <td key={t}>{s.scores[t] != null ? `${Math.round(s.scores[t] * 100)}%` : '—'}</td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {templateChartRows.length > 0 && (
-        <div className="card">
-          <h2>Score by Audit Type, Over Time</h2>
-          <div style={{ height: 280, marginTop: 10 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={templateChartRows}>
-                <CartesianGrid stroke="#2a2f3a" />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#8b93a3' }} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#8b93a3' }} />
-                <Tooltip contentStyle={CHART_TOOLTIP} />
-                <Legend wrapperStyle={{ fontSize: 12, color: '#8b93a3' }} />
-                {templateNames.map((name, i) => (
-                  <Line key={name} type="monotone" dataKey={name} stroke={LINE_COLORS[i % LINE_COLORS.length]} strokeWidth={2} dot={{ r: 3 }} connectNulls />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+    <div className="card">
+      <h2>Score by Audit Type, Over Time</h2>
+      <ReportFilterBar {...refData} filters={filters} onChange={setFilters} fields={['region', 'districtManager', 'storeId', 'auditorEmail', 'dateFrom', 'dateTo']} />
+      {rows.length === 0 && <div className="empty-state">No completed audits match these filters yet.</div>}
+      {rows.length > 0 && (
+        <div style={{ height: 280 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={rows}>
+              <CartesianGrid stroke="#2a2f3a" />
+              <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#8b93a3' }} />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#8b93a3' }} />
+              <Tooltip contentStyle={CHART_TOOLTIP} />
+              <Legend wrapperStyle={{ fontSize: 12, color: '#8b93a3' }} />
+              {templateNames.map((name, i) => (
+                <Line key={name} type="monotone" dataKey={name} stroke={LINE_COLORS[i % LINE_COLORS.length]} strokeWidth={2} dot={{ r: 3 }} connectNulls />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       )}
+    </div>
+  );
+}
 
-      <div className="card" style={{ padding: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 22px 0' }}>
+// ---------- Audits list ----------
+function AuditsSection({ refData }) {
+  const [filters, setFilters] = useState({});
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    api.getAuditsReport(cleanParams(filters)).then((r) => setData(r.audits));
+  }, [filters]);
+
+  function exportAudits() {
+    downloadCsv('audit-report.csv', data.map((a) => ({
+      Store: a.storeName, Region: a.region || '', 'District Manager': a.districtManager, Auditor: a.auditorName,
+      Template: a.templateName, 'Audit Month': a.auditPeriod ? a.auditPeriod.slice(0, 7) : '',
+      Started: new Date(a.startedAt).toLocaleString(), Completed: new Date(a.completedAt).toLocaleString(),
+      Announced: announcedLabel(a.announced), 'Manager On Shift': a.managerOnShift || '', 'Score (%)': a.score, Notes: a.overallNote || '',
+    })));
+  }
+
+  return (
+    <div className="card" style={{ padding: 0 }}>
+      <div style={{ padding: '18px 22px 0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2>Audits</h2>
-          <button className="ghost small" disabled={!auditsData || auditsData.length === 0} onClick={exportAudits}>Export CSV</button>
+          <button className="ghost small" disabled={!data || data.length === 0} onClick={exportAudits}>Export CSV</button>
         </div>
-        {!auditsData && <div style={{ padding: 20, color: 'var(--ink-soft)' }}>Loading...</div>}
-        {auditsData && auditsData.length === 0 && <div className="empty-state">No completed audits match these filters yet.</div>}
-        {auditsData && auditsData.length > 0 && (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ marginTop: 10 }}>
-              <thead>
-                <tr><th>Store</th><th>DM</th><th>Auditor</th><th>Audit Month</th><th>Announced</th><th>Manager on shift</th><th>Score</th></tr>
-              </thead>
-              <tbody>
-                {auditsData.map((a) => (
-                  <tr key={a.auditId}>
-                    <td><Link href={`/audits/${a.auditId}`}>{a.storeName}</Link></td>
-                    <td>{a.districtManager}</td>
-                    <td>{a.auditorName}</td>
-                    <td>{a.auditPeriod ? a.auditPeriod.slice(0, 7) : new Date(a.completedAt).toLocaleDateString()}</td>
-                    <td>{announcedLabel(a.announced)}</td>
-                    <td>{a.managerOnShift || '—'}</td>
-                    <td><ScoreRing score={a.score} size={36} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <ReportFilterBar {...refData} filters={filters} onChange={setFilters} fields={['region', 'districtManager', 'storeId', 'templateId', 'auditorEmail', 'dateFrom', 'dateTo']} />
       </div>
+      {!data && <div style={{ padding: '0 22px 20px', color: 'var(--ink-soft)' }}>Loading...</div>}
+      {data && data.length === 0 && <div className="empty-state">No completed audits match these filters yet.</div>}
+      {data && data.length > 0 && (
+        <div style={{ overflowX: 'auto' }}>
+          <table>
+            <thead>
+              <tr><th>Store</th><th>DM</th><th>Auditor</th><th>Audit Month</th><th>Announced</th><th>Manager on shift</th><th>Score</th></tr>
+            </thead>
+            <tbody>
+              {data.map((a) => (
+                <tr key={a.auditId}>
+                  <td><Link href={`/audits/${a.auditId}`}>{a.storeName}</Link></td>
+                  <td>{a.districtManager}</td>
+                  <td>{a.auditorName}</td>
+                  <td>{a.auditPeriod ? a.auditPeriod.slice(0, 7) : new Date(a.completedAt).toLocaleDateString()}</td>
+                  <td>{announcedLabel(a.announced)}</td>
+                  <td>{a.managerOnShift || '—'}</td>
+                  <td><ScoreRing score={a.score} size={36} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
 
-      <div className="card" style={{ padding: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 22px 0' }}>
+// ---------- Criteria misses ----------
+function CriteriaMissesSection({ refData }) {
+  const [filters, setFilters] = useState({});
+  const [all, setAll] = useState(null);
+
+  useEffect(() => {
+    const { threshold, ...apiFilters } = filters;
+    api.getCriteriaReport(cleanParams(apiFilters)).then((r) => setAll(r.criteria));
+    // eslint-disable-next-line
+  }, [filters.region, filters.districtManager, filters.storeId, filters.templateId, filters.auditorEmail, filters.dateFrom, filters.dateTo]);
+
+  const hasOtherFilters = ['region', 'districtManager', 'storeId', 'templateId', 'auditorEmail', 'dateFrom', 'dateTo'].some((k) => filters[k]);
+  const threshold = filters.threshold ? Number(filters.threshold) : null;
+
+  let shown = all || [];
+  let mode = 'top5';
+  if (threshold != null) {
+    shown = shown.filter((c) => c.failRate >= threshold);
+    mode = 'threshold';
+  } else if (hasOtherFilters) {
+    shown = shown.slice(0, 30);
+    mode = 'filtered';
+  } else {
+    shown = shown.slice(0, 5);
+    mode = 'top5';
+  }
+
+  function exportCriteria() {
+    downloadCsv('criteria-misses.csv', shown.map((c) => ({
+      'Audit Type': c.templateName, Section: c.section, Question: c.question, Fails: c.fails, 'Total Answered': c.total, 'Fail Rate (%)': c.failRate,
+    })));
+  }
+
+  return (
+    <div className="card" style={{ padding: 0 }}>
+      <div style={{ padding: '18px 22px 0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2>Criteria Misses</h2>
-            <p style={{ color: 'var(--ink-soft)', fontSize: 13, margin: 0 }}>Same question failing across many stores usually means a training gap or an unrealistic standard — most-missed first.</p>
+            <p style={{ color: 'var(--ink-soft)', fontSize: 13, margin: 0 }}>
+              {mode === 'top5' && 'Top 5 most-missed criteria across everything. Filter or set a fail-rate threshold to see more.'}
+              {mode === 'threshold' && `Criteria failing ${threshold}% of the time or more.`}
+              {mode === 'filtered' && 'Same question failing across many stores usually means a training gap or an unrealistic standard — most-missed first.'}
+            </p>
           </div>
-          <button className="ghost small" disabled={!criteriaData || criteriaData.length === 0} onClick={exportCriteria}>Export CSV</button>
+          <button className="ghost small" disabled={shown.length === 0} onClick={exportCriteria}>Export CSV</button>
         </div>
-        {criteriaData && criteriaData.length === 0 && <div className="empty-state">No answered questions match these filters yet.</div>}
-        {criteriaData && criteriaData.length > 0 && (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ marginTop: 10 }}>
-              <thead><tr><th>Section</th><th>Question</th><th>Fails</th><th>Answered</th><th>Fail rate</th></tr></thead>
-              <tbody>
-                {criteriaData.slice(0, 30).map((c, i) => (
-                  <tr key={i}>
-                    <td>{c.section}</td>
-                    <td>{c.question}</td>
-                    <td>{c.fails}</td>
-                    <td>{c.total}</td>
-                    <td>{c.failRate}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <ReportFilterBar {...refData} filters={filters} onChange={setFilters} fields={['region', 'districtManager', 'storeId', 'templateId', 'auditorEmail', 'dateFrom', 'dateTo', 'threshold']} />
       </div>
+      {!all && <div style={{ padding: '0 22px 20px', color: 'var(--ink-soft)' }}>Loading...</div>}
+      {all && shown.length === 0 && <div className="empty-state">No answered questions match these filters yet.</div>}
+      {shown.length > 0 && (
+        <div style={{ overflowX: 'auto' }}>
+          <table>
+            <thead><tr><th>Audit Type</th><th>Section</th><th>Question</th><th>Fails</th><th>Answered</th><th>Fail Rate</th></tr></thead>
+            <tbody>
+              {shown.map((c, i) => (
+                <tr key={i}>
+                  <td>{c.templateName}</td>
+                  <td>{c.section}</td>
+                  <td>{c.question}</td>
+                  <td>{c.fails}</td>
+                  <td>{c.total}</td>
+                  <td>{c.failRate}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
 
-      <button className="ghost" onClick={() => setShowAggregate((s) => !s)}>
-        {showAggregate ? 'Hide' : 'Show'} aggregate charts
-      </button>
+// ---------- Aggregate charts (toggle) ----------
+function AggregateSection({ refData }) {
+  const [show, setShow] = useState(false);
+  const [filters, setFilters] = useState({});
+  const [trendData, setTrendData] = useState(null);
+  const [breakdownData, setBreakdownData] = useState(null);
 
-      {showAggregate && trendData && trendData.trend.length > 0 && (
+  useEffect(() => {
+    if (!show) return;
+    api.getTrendReport(cleanParams(filters)).then(setTrendData);
+    api.getBreakdownReport(cleanParams(filters)).then(setBreakdownData);
+  }, [show, filters]);
+
+  return (
+    <div>
+      <button className="ghost" onClick={() => setShow((s) => !s)}>{show ? 'Hide' : 'Show'} Aggregate Charts</button>
+
+      {show && (
         <>
           <div className="card" style={{ marginTop: 16 }}>
-            <h2>Overall Average Score by Month</h2>
-            <div style={{ height: 240, marginTop: 10 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={trendData.trend}>
-                  <CartesianGrid stroke="#2a2f3a" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#8b93a3' }} />
-                  <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#8b93a3' }} />
-                  <Tooltip contentStyle={CHART_TOOLTIP} />
-                  <Line type="monotone" dataKey="averageScore" stroke="#2dd4bf" strokeWidth={2} dot={{ r: 3 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            <ReportFilterBar {...refData} filters={filters} onChange={setFilters} fields={['region', 'districtManager', 'storeId', 'templateId', 'auditorEmail', 'dateFrom', 'dateTo']} />
           </div>
 
-          {trendData.byDistrictManager.length > 1 && (
+          {trendData && trendData.trend.length > 0 && (
+            <div className="card">
+              <h2>Overall Average Score by Month</h2>
+              <div style={{ height: 240, marginTop: 10 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={trendData.trend}>
+                    <CartesianGrid stroke="#2a2f3a" />
+                    <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#8b93a3' }} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#8b93a3' }} />
+                    <Tooltip contentStyle={CHART_TOOLTIP} />
+                    <Line type="monotone" dataKey="averageScore" stroke="#2dd4bf" strokeWidth={2} dot={{ r: 3 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {trendData && trendData.byDistrictManager.length > 1 && (
             <div className="card">
               <h2>Average Score by District Manager</h2>
               <div style={{ height: Math.max(200, trendData.byDistrictManager.length * 36), marginTop: 10 }}>
@@ -333,6 +329,35 @@ function ReportsContent() {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+function ReportsContent() {
+  const [stores, setStores] = useState([]);
+  const [templates, setTemplates] = useState([]);
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    api.getStores().then(setStores);
+    api.getTemplates().then(setTemplates);
+    api.getUsers().then(setUsers);
+  }, []);
+
+  const refData = { stores, templates, users };
+
+  return (
+    <div>
+      <div className="card">
+        <h1>Reports</h1>
+        <p style={{ color: 'var(--ink-soft)', margin: 0 }}>Each section below filters independently.</p>
+      </div>
+
+      <AllScoresSection refData={refData} />
+      <TemplateTrendSection refData={refData} />
+      <AuditsSection refData={refData} />
+      <CriteriaMissesSection refData={refData} />
+      <AggregateSection refData={refData} />
     </div>
   );
 }

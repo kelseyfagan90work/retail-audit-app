@@ -256,5 +256,5 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent);
   .stat-row { gap: 16px; }
   .stat .num { font-size: 23px; }
 
-  .score-ring { width: 52px; height: 52px; font-size: 14px; border-width: 3px; }
+  .score-ring { width: 52px; height: 52px; }
 }

@@ -18,7 +18,7 @@ export async function GET(request) {
   const dateTo = params.get('dateTo');
 
   const admin = createAdminClient();
-  let auditQuery = admin.from('audits').select('id, completed_at, audit_period, stores!inner(region, district_manager)').eq('status', 'completed');
+  let auditQuery = admin.from('audits').select('id, completed_at, audit_period, template_name, stores!inner(region, district_manager)').eq('status', 'completed');
 
   if (region) auditQuery = auditQuery.eq('stores.region', region);
   if (districtManager) auditQuery = auditQuery.eq('stores.district_manager', districtManager);
@@ -39,6 +39,9 @@ export async function GET(request) {
   const auditIds = audits.map((a) => a.id);
   if (auditIds.length === 0) return NextResponse.json({ criteria: [] });
 
+  const templateNameByAuditId = {};
+  audits.forEach((a) => { templateNameByAuditId[a.id] = a.template_name; });
+
   const { data: sections } = await admin.from('audit_sections').select('id, name, audit_id').in('audit_id', auditIds);
   const sectionIds = (sections || []).map((s) => s.id);
   const { data: questions } = await admin
@@ -46,17 +49,21 @@ export async function GET(request) {
     .select('text, answer, audit_section_id')
     .in('audit_section_id', sectionIds.length ? sectionIds : [-1]);
 
-  const sectionNameById = {};
-  (sections || []).forEach((s) => { sectionNameById[s.id] = s.name; });
+  const sectionMeta = {};
+  (sections || []).forEach((s) => {
+    sectionMeta[s.id] = { name: s.name, templateName: templateNameByAuditId[s.audit_id] || 'Unknown' };
+  });
 
-  // Group by (section name + question text) — same question wording that
-  // shows up across many audits (because templates get reused/snapshotted)
-  // gets aggregated together, even though each audit has its own copy.
+  // Group by (audit type + section name + question text) — the same
+  // section name can exist in more than one audit type (e.g. "Front of
+  // Store"), so audit type has to be part of the identity or those get
+  // wrongly merged together.
   const byQuestion = {};
   (questions || []).forEach((q) => {
     if (q.answer !== 'yes' && q.answer !== 'no') return; // exclude N/A and unanswered
-    const key = `${sectionNameById[q.audit_section_id] || 'Unknown'}::${q.text}`;
-    (byQuestion[key] ||= { section: sectionNameById[q.audit_section_id] || 'Unknown', question: q.text, fails: 0, total: 0 });
+    const meta = sectionMeta[q.audit_section_id] || { name: 'Unknown', templateName: 'Unknown' };
+    const key = `${meta.templateName}::${meta.name}::${q.text}`;
+    (byQuestion[key] ||= { templateName: meta.templateName, section: meta.name, question: q.text, fails: 0, total: 0 });
     byQuestion[key].total += 1;
     if (q.answer === 'no') byQuestion[key].fails += 1;
   });
