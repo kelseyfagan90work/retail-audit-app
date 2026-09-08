@@ -25,7 +25,7 @@ export async function POST(request) {
 
   for (const id of auditIds) {
     try {
-      const { buffer, fileName, audit } = await generateAuditPdf(id, admin);
+      const { buffer, fileName, audit } = await generateAuditPdf(id, admin, { hideAuditor: true });
       attachments.push({ filename: fileName, content: buffer });
       summaries.push({
         storeName: audit.stores.store_name,

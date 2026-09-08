@@ -51,7 +51,7 @@ function answerColor(a) {
   return '#888888';
 }
 
-export default function AuditPdfDocument({ audit }) {
+export default function AuditPdfDocument({ audit, hideAuditor = false }) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -62,8 +62,12 @@ export default function AuditPdfDocument({ audit }) {
 
         <View style={styles.metaRow}>
           <View style={styles.metaCol}>
-            <Text style={styles.metaLabel}>Auditor</Text>
-            <Text style={styles.metaValue}>{audit.auditor_name || audit.auditor_email}</Text>
+            {!hideAuditor && (
+              <>
+                <Text style={styles.metaLabel}>Auditor</Text>
+                <Text style={styles.metaValue}>{audit.auditor_name || audit.auditor_email}</Text>
+              </>
+            )}
             <Text style={styles.metaLabel}>Audit month</Text>
             <Text style={styles.metaValue}>{audit.audit_period ? audit.audit_period.slice(0, 7) : '—'}</Text>
           </View>
