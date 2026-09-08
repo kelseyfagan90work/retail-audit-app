@@ -219,7 +219,7 @@ function AggregateSection({ globalFilters }) {
                 <CartesianGrid stroke="#2a2f3a" horizontal={false} />
                 <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12, fill: '#8b93a3' }} />
                 <YAxis type="category" dataKey="districtManager" tick={{ fontSize: 12, fill: '#8b93a3' }} width={110} />
-                <Tooltip contentStyle={CHART_TOOLTIP} />
+                <Tooltip contentStyle={CHART_TOOLTIP} cursor={{ fill: 'rgba(45, 212, 191, 0.08)' }} />
                 <Bar dataKey="averageScore" radius={[0, 4, 4, 0]}>
                   {trendData.byDistrictManager.map((_, i) => <Cell key={i} fill={LINE_COLORS[i % LINE_COLORS.length]} />)}
                 </Bar>
@@ -238,7 +238,7 @@ function AggregateSection({ globalFilters }) {
                 <CartesianGrid stroke="#2a2f3a" horizontal={false} />
                 <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12, fill: '#8b93a3' }} />
                 <YAxis type="category" dataKey="audit" tick={{ fontSize: 12, fill: '#8b93a3' }} width={140} />
-                <Tooltip formatter={(v, name, props) => [`${v}%`, `pass rate (n=${props.payload.sampleSize})`]} contentStyle={CHART_TOOLTIP} />
+                <Tooltip formatter={(v) => [`${v}%`, 'pass rate']} contentStyle={CHART_TOOLTIP} labelStyle={{ color: '#e8eaf0' }} itemStyle={{ color: '#e8eaf0' }} cursor={{ fill: 'rgba(45, 212, 191, 0.08)' }} />
                 <Bar dataKey="passRate" radius={[0, 4, 4, 0]}>
                   {breakdownData.audits.map((s, i) => (
                     <Cell key={i} fill={s.passRate >= 90 ? '#3ddc8f' : s.passRate >= 75 ? '#f5b942' : '#ff6b6b'} />
