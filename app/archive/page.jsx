@@ -13,6 +13,14 @@ function cleanParams(obj) {
   return out;
 }
 
+// Swap these four for your team's real addresses.
+const STANDING_RECIPIENTS = [
+  'chad.espinoza@stiiizy.com',
+  'cindy.arteaga@stiiizy.com',
+  'eric.kim@stiiizy.com',
+  'caitlin.meyers@stiiizy.com',
+];
+
 function ArchiveContent({ user }) {
   const [stores, setStores] = useState([]);
   const [templates, setTemplates] = useState([]);
@@ -24,7 +32,30 @@ function ArchiveContent({ user }) {
   const [recipient, setRecipient] = useState('');
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState(null);
+  const [checkedStanding, setCheckedStanding] = useState(new Set());
 
+  function toggleStanding(email) {
+    setCheckedStanding((prev) => {
+      const next = new Set(prev);
+      if (next.has(email)) next.delete(email); else next.add(email);
+      return next;
+    });
+    setRecipient((prev) => {
+      const list = prev.split(/[,;\s]+/).map((r) => r.trim()).filter(Boolean);
+      const has = list.some((r) => r.toLowerCase() === email.toLowerCase());
+      const next = has ? list.filter((r) => r.toLowerCase() !== email.toLowerCase()) : [...list, email];
+      return next.join(', ');
+    });
+  }
+
+  const selectedStoreNames = [...new Set((audits || []).filter((a) => selected.has(a.auditId)).map((a) => a.storeName))];
+  const matchedStores = stores.filter((s) => selectedStoreNames.includes(s.store_name));
+  const suggestedEmails = [...new Set(matchedStores.flatMap((s) => [s.store_email, s.district_manager_email].filter(Boolean)))];
+
+  useEffect(() => {
+    if (!recipient && suggestedEmails.length > 0) setRecipient(suggestedEmails.join(', '));
+    // eslint-disable-next-line
+  }, [selected]);
   useEffect(() => {
     api.getStores().then(setStores);
     api.getTemplates().then(setTemplates);
@@ -53,13 +84,27 @@ function ArchiveContent({ user }) {
     setSelected((prev) => (prev.size === audits.length ? new Set() : new Set(audits.map((a) => a.auditId))));
   }
 
-  async function sendSelected() {
-    if (!recipient) { setSendResult({ ok: false, message: 'Enter a recipient email.' }); return; }
+    async function sendSelected() {
+    const allRecipients = recipient.split(/[,;\s]+/).map((r) => r.trim()).filter(Boolean);
+    if (allRecipients.length === 0) { setSendResult({ ok: false, message: 'Enter at least one recipient email.' }); return; }
+
+    const currentStoreEmails = new Set(
+      stores
+        .filter((s) => selectedStoreNames.includes(s.store_name) && s.store_email)
+        .map((s) => s.store_email.toLowerCase())
+    );
+    const toRecipients = allRecipients.filter((r) => currentStoreEmails.has(r.toLowerCase()));
+    const ccRecipients = allRecipients.filter((r) => !currentStoreEmails.has(r.toLowerCase()));
+    const finalTo = toRecipients.length > 0 ? toRecipients : allRecipients;
+    const finalCc = toRecipients.length > 0 ? ccRecipients : [];
+
     setSending(true);
     setSendResult(null);
     try {
-      const res = await api.sendBulkReport([...selected], recipient);
-      setSendResult({ ok: true, message: `Sent ${res.count} report(s) to ${res.sentTo}.` });
+      const res = await api.sendBulkReport([...selected], finalTo, finalCc);
+      const sentTo = Array.isArray(res.sentTo) ? res.sentTo.join(', ') : res.sentTo;
+      const sentCc = res.sentCc && res.sentCc.length ? ` (cc: ${res.sentCc.join(', ')})` : '';
+      setSendResult({ ok: true, message: `Sent ${res.count} report(s) to ${sentTo}${sentCc}.` });
       setSelected(new Set());
     } catch (e) {
       setSendResult({ ok: false, message: e.message });
@@ -94,10 +139,24 @@ function ArchiveContent({ user }) {
           <h2>Send Selected as Report</h2>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 8 }}>
             <span style={{ fontSize: 13, color: 'var(--ink-soft)' }}>{selected.size} selected</span>
-            <input type="email" placeholder="Recipient email" value={recipient} onChange={(e) => setRecipient(e.target.value)} style={{ flex: 1, minWidth: 200 }} />
+            <input type="email" multiple placeholder="Recipient email(s), comma-separated" value={recipient} onChange={(e) => setRecipient(e.target.value)} style={{ flex: 1, minWidth: 220 }} />
             <button className="primary" onClick={sendSelected} disabled={sending || selected.size === 0}>
               {sending ? 'Sending...' : 'Send'}
             </button>
+          </div>
+          {suggestedEmails.length > 0 && (
+            <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 6 }}>
+              Suggested from selection: {suggestedEmails.join(', ')}{' '}
+              <button className="ghost small" onClick={() => setRecipient(suggestedEmails.join(', '))}>Use</button>
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 10, fontSize: 13 }}>
+            {STANDING_RECIPIENTS.map((email) => (
+              <label key={email} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                <input type="checkbox" checked={checkedStanding.has(email)} onChange={() => toggleStanding(email)} />
+                {email}
+              </label>
+            ))}
           </div>
           {sendResult && (
             <div style={{ marginTop: 8, fontSize: 13, color: sendResult.ok ? 'var(--approved)' : 'var(--rejected)' }}>{sendResult.message}</div>
