@@ -44,7 +44,7 @@ export async function POST(request) {
       await sendReportEmail({
       to,
       cc,
-      subject: `Audit Reports — ${summaries.length} store${summaries.length === 1 ? '' : 's'} (${monthLabel})`,
+      subject: `Retail Audit Reports — ${summaries.length} store${summaries.length === 1 ? '' : 's'} (${monthLabel})`,
       html,
       attachments,
     });
