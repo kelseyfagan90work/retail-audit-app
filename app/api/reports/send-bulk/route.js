@@ -10,7 +10,7 @@ export async function POST(request) {
   const user = await getCurrentUser();
   if (!user || user.role !== 'admin') return NextResponse.json({ error: 'Admin access only.' }, { status: 403 });
 
-  const { auditIds, to } = await request.json();
+  const { auditIds, to, cc } = await request.json();
   if (!Array.isArray(auditIds) || auditIds.length === 0) {
     return NextResponse.json({ error: 'Select at least one audit.' }, { status: 400 });
   }
@@ -41,8 +41,9 @@ export async function POST(request) {
   const monthLabel = new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 
   try {
-    await sendReportEmail({
+      await sendReportEmail({
       to,
+      cc,
       subject: `Audit Reports — ${summaries.length} store${summaries.length === 1 ? '' : 's'} (${monthLabel})`,
       html,
       attachments,
@@ -51,5 +52,5 @@ export async function POST(request) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, count: summaries.length, sentTo: to });
+  return NextResponse.json({ success: true, count: summaries.length, sentTo: to, sentCc: cc || [] });
 }
