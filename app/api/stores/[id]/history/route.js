@@ -9,6 +9,7 @@ export async function GET(request, { params }) {
   if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
 
   const excludeAuditId = request.nextUrl.searchParams.get('excludeAuditId');
+  const templateId = request.nextUrl.searchParams.get('templateId');
 
   const admin = createAdminClient();
   let query = admin
@@ -20,6 +21,7 @@ export async function GET(request, { params }) {
     .limit(7);
 
   if (excludeAuditId) query = query.neq('id', excludeAuditId);
+  if (templateId) query = query.eq('template_id', templateId);
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

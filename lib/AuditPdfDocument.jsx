@@ -17,6 +17,10 @@ const styles = StyleSheet.create({
   metaLabel: { fontSize: 8, color: '#888888', textTransform: 'uppercase', marginBottom: 1 },
   metaValue: { fontSize: 10, marginBottom: 6 },
   scoreBox: { fontSize: 22, fontFamily: 'Helvetica-Bold' },
+  priorScoreLabel: { fontSize: 7, color: '#888888', textTransform: 'uppercase', textAlign: 'center' },
+  priorScoreValue: { fontSize: 12, fontFamily: 'Helvetica-Bold', textAlign: 'center', marginTop: 1 },
+  scoreTrendRow: { flexDirection: 'row', alignItems: 'flex-end' },
+  priorScoreCol: { marginLeft: 10 },
   sectionTitle: {
     fontSize: 13,
     fontFamily: 'Helvetica-Bold',
@@ -113,7 +117,21 @@ export default function AuditPdfDocument({ audit, hideAuditor = false }) {
           </View>
           <View style={styles.metaCol}>
             <Text style={styles.metaLabel}>Overall score</Text>
-            <Text style={styles.scoreBox}>{audit.overall_score != null ? `${audit.overall_score}%` : '—'}</Text>
+            <View style={styles.scoreTrendRow}>
+              <Text style={styles.scoreBox}>{audit.overall_score != null ? `${audit.overall_score}%` : '—'}</Text>
+              {(priorPeriods[0] || priorPeriods[1]) && (
+                <>
+                  <View style={styles.priorScoreCol}>
+                    <Text style={styles.priorScoreLabel}>{monthLabel(priorPeriods[1])}</Text>
+                    <Text style={styles.priorScoreValue}>{audit.priorScores?.[1] != null ? `${audit.priorScores[1]}%` : '—'}</Text>
+                  </View>
+                  <View style={styles.priorScoreCol}>
+                    <Text style={styles.priorScoreLabel}>{monthLabel(priorPeriods[0])}</Text>
+                    <Text style={styles.priorScoreValue}>{audit.priorScores?.[0] != null ? `${audit.priorScores[0]}%` : '—'}</Text>
+                  </View>
+                </>
+              )}
+            </View>
           </View>
         </View>
 

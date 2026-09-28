@@ -11,7 +11,7 @@ import AnswerToggle from '@/components/AnswerToggle';
 import ScoreRing from '@/components/ScoreRing';
 import MonthYearSelect from '@/components/MonthYearSelect';
 
-function QuestionRow({ question, auditId, readOnly, onAnswerChange, onPhotoAdded }) {
+function QuestionRow({ question, auditId, readOnly, onAnswerChange, onPhotoAdded, previousAnswer }) {
   const [note, setNote] = useState(question.note || '');
   const [uploading, setUploading] = useState(false);
   const fileInput = useRef(null);
@@ -39,10 +39,18 @@ function QuestionRow({ question, auditId, readOnly, onAnswerChange, onPhotoAdded
     }
   }
 
+  const prevLabel = previousAnswer === 'yes' ? 'Yes' : previousAnswer === 'no' ? 'No' : previousAnswer === 'n_a' ? 'N/A' : null;
+  const prevColor = previousAnswer === 'no' ? 'var(--rejected)' : previousAnswer === 'yes' ? 'var(--approved)' : 'var(--ink-soft)';
+
   return (
     <div className="audit-question">
       <div className="audit-question-row">
-        <div className="audit-question-text">{question.text}</div>
+        <div className="audit-question-text">
+          {question.text}
+          {!readOnly && prevLabel && (
+            <div style={{ fontSize: 12, color: prevColor, marginTop: 2 }}>Last audit: {prevLabel}</div>
+          )}
+        </div>
         <AnswerToggle value={question.answer} onChange={setAnswer} disabled={readOnly} />
       </div>
 
@@ -150,7 +158,7 @@ function AuditContent({ auditId, user }) {
     setManagerOnShift(data.manager_on_shift || '');
     setOverallNote(data.overall_note || '');
     setAuditPeriod(data.audit_period ? data.audit_period.slice(0, 7) : '');
-    api.getStoreHistory(data.store_id, auditId).then(setHistory);
+    api.getStoreHistory(data.store_id, auditId, data.template_id).then(setHistory);
   }
   useEffect(() => { refresh(); api.getUsers().then(setUsers); /* eslint-disable-next-line */ }, [auditId]);
 
@@ -352,14 +360,13 @@ function AuditContent({ auditId, user }) {
 
       {history && history.length > 0 && (
         <div className="card">
-          <h2>{audit.stores.store_name}'s Recent Audits</h2>
+          <h2>{audit.stores.store_name}'s Recent {audit.template_name} Audits</h2>
           <div style={{ marginTop: 8 }}>
             {history.map((h) => (
               <Link href={`/audits/${h.id}`} key={h.id} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className="inline-edit-row" style={{ cursor: 'pointer' }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600, fontSize: 14 }}>{h.template_name}</div>
-                    <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{h.audit_period ? h.audit_period.slice(0, 7) : new Date(h.completed_at).toLocaleDateString()}</div>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{h.audit_period ? h.audit_period.slice(0, 7) : new Date(h.completed_at).toLocaleDateString()}</div>
                   </div>
                   <ScoreRing score={h.overall_score} size={36} />
                 </div>
@@ -379,7 +386,15 @@ function AuditContent({ auditId, user }) {
             <SectionTaskButton section={section} audit={audit} users={users} />
           </div>
           {section.questions.map((q) => (
-            <QuestionRow key={q.id} question={q} auditId={auditId} readOnly={readOnly} onAnswerChange={handleAnswerChange} onPhotoAdded={handlePhotoAdded} />
+            <QuestionRow
+              key={q.id}
+              question={q}
+              auditId={auditId}
+              readOnly={readOnly}
+              onAnswerChange={handleAnswerChange}
+              onPhotoAdded={handlePhotoAdded}
+              previousAnswer={audit.previousAnswers?.[q.text]}
+            />
           ))}
         </div>
       ))}

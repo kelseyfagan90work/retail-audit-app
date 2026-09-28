@@ -49,7 +49,39 @@ export async function GET(request, { params }) {
       .map((q) => ({ ...q, photos: photosWithUrls.filter((p) => p.audit_question_id === q.id) })),
   }));
 
-  return NextResponse.json({ ...audit, sections: sectionsWithQuestions });
+  // Most recent COMPLETED prior audit of this same store + template, for
+  // giving the auditor "here's what was found last time" context while
+  // they're filling this one out. Matched by question text, same caveat as
+  // the PDF trend columns — if a question's wording changes, its history
+  // effectively resets.
+  let previousAnswers = {};
+  let previousAuditInfo = null;
+  if (audit.audit_period && audit.store_id && audit.template_id) {
+    const { data: prevAudit } = await admin
+      .from('audits')
+      .select('id, audit_period, overall_score')
+      .eq('store_id', audit.store_id)
+      .eq('template_id', audit.template_id)
+      .eq('status', 'completed')
+      .neq('id', params.id)
+      .lt('audit_period', audit.audit_period)
+      .order('audit_period', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (prevAudit) {
+      const { data: prevSections } = await admin.from('audit_sections').select('id').eq('audit_id', prevAudit.id);
+      const prevSectionIds = (prevSections || []).map((s) => s.id);
+      const { data: prevQuestions } = await admin
+        .from('audit_questions')
+        .select('text, answer')
+        .in('audit_section_id', prevSectionIds.length ? prevSectionIds : [-1]);
+      (prevQuestions || []).forEach((q) => { previousAnswers[q.text] = q.answer; });
+      previousAuditInfo = { auditPeriod: prevAudit.audit_period, overallScore: prevAudit.overall_score };
+    }
+  }
+
+  return NextResponse.json({ ...audit, sections: sectionsWithQuestions, previousAnswers, previousAuditInfo });
 }
 
 export async function PATCH(request, { params }) {
