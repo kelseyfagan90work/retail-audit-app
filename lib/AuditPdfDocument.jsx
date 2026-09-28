@@ -27,9 +27,14 @@ const styles = StyleSheet.create({
     borderBottomColor: '#111111',
     borderBottomStyle: 'solid',
   },
+  trendHeaderRow: { flexDirection: 'row', marginBottom: 6 },
+  trendHeaderLabel: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#888888', textTransform: 'uppercase', flexGrow: 1, flexShrink: 1, flexBasis: 0, marginRight: 8 },
+  trendHeaderCol: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#888888', width: 30, flexShrink: 0, textAlign: 'center' },
+  trendHeaderCurrent: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#888888', width: 50, flexShrink: 0, textAlign: 'right' },
   question: { marginBottom: 10, paddingBottom: 8, borderBottomWidth: 0.5, borderBottomColor: '#eeeeee', borderBottomStyle: 'solid' },
   questionRow: { flexDirection: 'row', justifyContent: 'space-between' },
   questionText: { fontSize: 10, flexGrow: 1, flexShrink: 1, flexBasis: 0, marginRight: 8 },
+  trendCell: { fontSize: 9, fontFamily: 'Helvetica-Bold', width: 30, flexShrink: 0, textAlign: 'center' },
   answer: { fontSize: 10, fontFamily: 'Helvetica-Bold', width: 50, flexShrink: 0, textAlign: 'right' },
   note: { fontSize: 9, color: '#555555', marginTop: 4 },
   photoRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 6 },
@@ -38,9 +43,24 @@ const styles = StyleSheet.create({
   overallNoteTitle: { fontFamily: 'Helvetica-Bold', marginBottom: 4 },
 });
 
+const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function monthLabel(period) {
+  if (!period) return '—';
+  const [, m] = period.slice(0, 7).split('-');
+  return MONTH_ABBR[parseInt(m, 10) - 1];
+}
+
 function answerLabel(a) {
   if (a === 'yes') return 'YES';
   if (a === 'no') return 'NO';
+  if (a === 'n_a') return 'N/A';
+  return '—';
+}
+
+function trendLabel(a) {
+  if (a === 'yes') return 'Y';
+  if (a === 'no') return 'N';
   if (a === 'n_a') return 'N/A';
   return '—';
 }
@@ -51,7 +71,15 @@ function answerColor(a) {
   return '#888888';
 }
 
+function trendColor(a) {
+  if (a === 'yes') return '#1d7a3c';
+  if (a === 'no') return '#b23a34';
+  return '#aaaaaa';
+}
+
 export default function AuditPdfDocument({ audit, hideAuditor = false }) {
+  const priorPeriods = audit.priorPeriods || [null, null]; // [1 month ago, 2 months ago]
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -89,6 +117,13 @@ export default function AuditPdfDocument({ audit, hideAuditor = false }) {
           </View>
         </View>
 
+        <View style={styles.trendHeaderRow}>
+          <Text style={styles.trendHeaderLabel}>Criteria</Text>
+          <Text style={styles.trendHeaderCol}>{monthLabel(priorPeriods[1])}</Text>
+          <Text style={styles.trendHeaderCol}>{monthLabel(priorPeriods[0])}</Text>
+          <Text style={styles.trendHeaderCurrent}>Current</Text>
+        </View>
+
         {audit.sections.map((section) => (
           <View key={section.id}>
             <Text style={styles.sectionTitle}>{section.name}</Text>
@@ -96,6 +131,8 @@ export default function AuditPdfDocument({ audit, hideAuditor = false }) {
               <View key={q.id} style={styles.question} wrap={false}>
                 <View style={styles.questionRow}>
                   <Text style={styles.questionText}>{q.text}</Text>
+                  <Text style={[styles.trendCell, { color: trendColor(q.prevAnswers?.[1]) }]}>{trendLabel(q.prevAnswers?.[1])}</Text>
+                  <Text style={[styles.trendCell, { color: trendColor(q.prevAnswers?.[0]) }]}>{trendLabel(q.prevAnswers?.[0])}</Text>
                   <Text style={[styles.answer, { color: answerColor(q.answer) }]}>{answerLabel(q.answer)}</Text>
                 </View>
                 {q.note ? <Text style={styles.note}>Note: {q.note}</Text> : null}
